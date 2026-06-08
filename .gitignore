@@ -15,3 +15,4 @@ out/
 .cache/
 .vite/
 .electron/
+*.local

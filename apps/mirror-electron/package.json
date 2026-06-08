@@ -12,14 +12,22 @@
   },
   "dependencies": {
     "@aethos/mirror-protocol": "workspace:*",
+    "@elevenlabs/elevenlabs-js": "^2.51.0",
     "clsx": "^2.1.1",
+    "dotenv": "^17.4.2",
     "electron": "^28.0.0",
+    "googleapis": "^173.0.0",
+    "leaflet": "^1.9.4",
     "lucide-react": "^1.17.0",
+    "node-telegram-bot-api": "^0.67.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "react-leaflet": "^5.0.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
+    "@types/node-telegram-bot-api": "^0.64.14",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
     "electron-vite": "^2.0.0",
