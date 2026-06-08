@@ -1,0 +1,32 @@
+{
+  "name": "aethos-mirror",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Standalone Electron kiosk/browser appliance for the AetherCore/Aethos ecosystem",
+  "type": "module",
+  "packageManager": "pnpm@10.0.0",
+  "scripts": {
+    "dev": "pnpm --filter @aethos/mirror-electron dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "keywords": [
+    "aethos",
+    "aethercore",
+    "electron",
+    "kiosk",
+    "magic-mirror",
+    "assistant"
+  ],
+  "author": "ArchCloudSystems",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.9.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "electron",
+      "esbuild"
+    ]
+  }
+}
