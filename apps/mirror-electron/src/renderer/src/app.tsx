@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import type { MirrorMode, MirrorState } from "@aethos/mirror-protocol";
-import { AileeOrb } from "./components/ModeComponents";
+import { AileeOrb, MirrorModules } from "./components/ModeComponents";
 import "./global.css";
 
 // ─────────────────────────────────────────────────────────────────────────────────────────
@@ -69,35 +69,14 @@ function useMirrorApi(port = DEFAULT_PORT) {
 
 function LandingMode(): JSX.Element {
   return (
-    <main className="mirror-shell">
-      <section className="mirror-card">
+    <main className="mirror-shell mirror-stage">
+      <MirrorModules />
+
+      <section className="mirror-stage__center">
         <p className="eyebrow">Magic mirror display</p>
         <h1>Ailee Mirror</h1>
 
         <AileeOrb mode="landing" />
-
-        <div className="status-grid">
-          <div>
-            <span>Ailee</span>
-            <strong>Standing by</strong>
-          </div>
-          <div>
-            <span>Overlay</span>
-            <strong>standby</strong>
-          </div>
-          <div>
-            <span>Mode</span>
-            <strong>landing</strong>
-          </div>
-          <div>
-            <span>Local API</span>
-            <strong>http://127.0.0.1:3055</strong>
-          </div>
-        </div>
-
-        <p className="note">
-          Ailee Mirror is a calm magic mirror display. It stands by quietly and shows the current mode and overlay.
-        </p>
       </section>
     </main>
   );

@@ -56,6 +56,88 @@ export function AileeOrb({ mode }: AileeOrbProps): JSX.Element {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────────────────
+// Mirror Modules — MagicMirror-style placeholder widgets around the Ailee orb
+// ─────────────────────────────────────────────────────────────────────────────────────────
+
+// These are calm, distance-readable placeholders only. No real data providers,
+// no external APIs — every value below is static placeholder content.
+
+const COMMAND_HINTS = [
+  "Ailee, latest news",
+  "Ailee, weather",
+  "Ailee, show map",
+  "Ailee, open YouTube",
+];
+
+const HEADLINE_PLACEHOLDERS = [
+  "Headline one — standing by for the latest news",
+  "Headline two — standing by for the latest news",
+  "Headline three — standing by for the latest news",
+];
+
+export function MirrorModules(): JSX.Element {
+  return (
+    <div className="mirror-modules" aria-label="Mirror modules">
+      {/* Top-left: time / date */}
+      <div className="mirror-module mirror-module--top-left module-time">
+        <span className="module-time__clock">09:42</span>
+        <span className="module-time__date">Monday, June 8, 2026</span>
+      </div>
+
+      {/* Top-right: weather placeholder */}
+      <div className="mirror-module mirror-module--top-right module-weather">
+        <span className="module-weather__glyph" aria-hidden="true">◐</span>
+        <div className="module-weather__readout">
+          <span className="module-weather__temp">--°</span>
+          <span className="module-weather__label">Weather standing by</span>
+        </div>
+      </div>
+
+      {/* Lower-left: 3 headline rows */}
+      <div className="mirror-module mirror-module--bottom-left module-headlines">
+        <span className="module-heading">Headlines</span>
+        <ul className="module-headlines__list">
+          {HEADLINE_PLACEHOLDERS.map((line, index) => (
+            <li key={index} className="module-headlines__row">
+              {line}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* Lower-right: calendar + email previews and a mini-map */}
+      <div className="mirror-module mirror-module--bottom-right module-stack">
+        <div className="module-preview module-calendar">
+          <span className="module-heading">Calendar</span>
+          <span className="module-preview__line">Calendar preview standing by</span>
+        </div>
+
+        <div className="module-preview module-email">
+          <span className="module-heading">Email</span>
+          <span className="module-preview__line">Email update standing by</span>
+        </div>
+
+        <div className="module-preview module-map">
+          <span className="module-heading">Map</span>
+          <div className="module-map__canvas" aria-hidden="true">
+            <span className="module-map__pin"></span>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom: command hints */}
+      <div className="mirror-module mirror-module--bottom-center module-hints">
+        {COMMAND_HINTS.map((hint) => (
+          <span key={hint} className="module-hint">
+            {hint}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────────────────
 // Landing Mode Component
 // ─────────────────────────────────────────────────────────────────────────────────────────
 
