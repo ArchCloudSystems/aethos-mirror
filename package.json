@@ -8,7 +8,8 @@
   "scripts": {
     "dev": "pnpm --filter @aethos/mirror-electron dev",
     "build": "pnpm -r build",
-    "typecheck": "pnpm -r typecheck"
+    "typecheck": "pnpm -r typecheck",
+    "audit:no-forbidden-text": "bash scripts/audit/no-forbidden-text.sh ."
   },
   "keywords": [
     "aethos",
