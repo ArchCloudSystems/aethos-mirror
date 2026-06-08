@@ -1,0 +1,242 @@
+/* ─────── Main Application ─────── */
+@import "../global.css";
+
+/* ─────── Display Node Container ─────── */
+.display-node {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: radial-gradient(circle at center, #020617 0%, #000000 100%);
+}
+
+/* ─────── Layout ─────── */
+.layout {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 2rem;
+}
+
+/* ─────── Header ─────── */
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+.header-left,
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-weight: 600;
+  font-size: 1.25rem;
+  color: #fff;
+}
+
+.logo-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #34d399, #38bdf8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #020617;
+}
+
+.logo-text{
+  font-weight: 600;
+  font-size: 1.25rem;
+  color: #fff;
+}
+
+.system-status {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+  background: rgba(15, 23, 42, 0.8);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: rgba(148, 163, 184, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-accent);
+}
+
+.status-dot.offline {
+  background: var(--color-accent-red);
+}
+
+.version {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-accent);
+}
+
+/* ─────── Content ─────── */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem 0;
+}
+
+.content-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* ─────── Tool Panel (hidden by default) ─────── */
+.tool-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 400px;
+  height: 100vh;
+  background: rgba(15, 23, 42, 0.98);
+  border-left: 1px solid rgba(148, 163, 184, 0.15);
+  box-shadow: -10px 0 40px rgba(0, 0, 0, 0.5);
+  transform: translateX(100%);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 100;
+  overflow-y: auto;
+  backdrop-filter: blur(20px);
+}
+
+.tool-panel.open {
+  transform: translateX(0);
+}
+
+.tool-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+.tool-panel-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #fff;
+}
+
+.close-panel {
+  background: none;
+  border: none;
+  color: var(--color-accent-red);
+  cursor: pointer;
+  padding: 0.5rem;
+  font-size: 1.25rem;
+}
+
+.tool-panel-content {
+  padding: 1.5rem;
+}
+
+/* ─────── Controls (hidden by default) ─────── */
+.overlay-controls {
+  position: fixed;
+  top: 0;
+  right: 0;
+  padding: 1.5rem;
+  display: flex;
+  gap: 0.75rem;
+  pointer-events: none;
+  z-index: 50;
+}
+
+.overlay-controls.hidden {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.overlay-controls.visible {
+  opacity: 1;
+  transition: opacity 0.3s ease;
+  pointer-events: auto;
+}
+
+.control-btn {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  color: rgba(203, 213, 225, 0.9);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.control-btn:hover {
+  background: rgba(15, 23, 42, 1);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  transform: translateY(-1px);
+}
+
+.control-btn svg {
+  width: 20px;
+  height: 20px;
+  stroke-width: 2;
+}
+
+/* ─────── Mode Transitions ─────── */
+.mode-transition {
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ─────── Responsive ─────── */
+@media (max-width: 768px) {
+  .header-left,
+  .header-right {
+    gap: 1rem;
+  }
+
+  .system-status {
+    padding: 0.5rem;
+    font-size: 0.8rem;
+  }
+
+  .tool-panel {
+    width: 320px;
+  }
+
+  .control-btn {
+    width: 36px;
+    height: 36px;
+  }
+}
