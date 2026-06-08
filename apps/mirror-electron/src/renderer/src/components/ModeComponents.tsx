@@ -1,6 +1,61 @@
 import "./ModeComponents.css";
 
 // ─────────────────────────────────────────────────────────────────────────────────────────
+// Ailee Orb — central visual anchor
+// ─────────────────────────────────────────────────────────────────────────────────────────
+
+// Visual state derived from the current mirror mode. Each state maps to a
+// CSS modifier (drives glow/animation) and a short calm status phrase.
+type AileeOrbState = "standing-by" | "briefing" | "listening" | "thinking" | "dimmed" | "attention";
+
+interface AileeOrbStateInfo {
+  state: AileeOrbState;
+  phrase: string;
+}
+
+function deriveAileeOrbState(mode?: string): AileeOrbStateInfo {
+  switch (mode) {
+    case "briefing":
+      return { state: "briefing", phrase: "Briefing" };
+    case "voice_only":
+      return { state: "listening", phrase: "Listening" };
+    case "browser":
+    case "cockpit":
+    case "tool_panel":
+      return { state: "thinking", phrase: "Thinking" };
+    case "sleep":
+      return { state: "dimmed", phrase: "Resting" };
+    case "error":
+      return { state: "attention", phrase: "Attention needed" };
+    case "landing":
+    default:
+      return { state: "standing-by", phrase: "Standing by" };
+  }
+}
+
+interface AileeOrbProps {
+  // Optional current mode; when omitted the orb rests in its standing-by state.
+  mode?: string;
+}
+
+export function AileeOrb({ mode }: AileeOrbProps): JSX.Element {
+  const { state, phrase } = deriveAileeOrbState(mode);
+
+  return (
+    <div className={`ailee-orb ailee-orb--${state}`} role="img" aria-label={`Ailee — ${phrase}`}>
+      <div className="ailee-orb__halo" aria-hidden="true"></div>
+      <div className="ailee-orb__sphere" aria-hidden="true">
+        <span className="ailee-orb__core"></span>
+      </div>
+      <div className="ailee-orb__caption">
+        <span className="ailee-orb__name">Ailee</span>
+        <span className="ailee-orb__status">{phrase}</span>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────────────────
 // Landing Mode Component
 // ─────────────────────────────────────────────────────────────────────────────────────────
 

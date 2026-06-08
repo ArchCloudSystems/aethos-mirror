@@ -650,4 +650,189 @@
   .error-title {
     font-size: 2rem;
   }
+
+  .ailee-orb__sphere {
+    width: 200px;
+    height: 200px;
+  }
+
+  .ailee-orb__halo {
+    width: 280px;
+    height: 280px;
+  }
+}
+
+/* ─────── Ailee Orb ─────── */
+.ailee-orb {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 2.5rem auto;
+  width: 100%;
+}
+
+/* Soft outer halo / glow behind the sphere */
+.ailee-orb__halo {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 360px;
+  height: 360px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at 50% 45%,
+    rgba(96, 165, 250, 0.35) 0%,
+    rgba(56, 189, 248, 0.18) 35%,
+    rgba(52, 211, 153, 0.08) 60%,
+    transparent 72%
+  );
+  filter: blur(8px);
+  animation: aileeHaloBreathe 6s ease-in-out infinite;
+}
+
+/* The orb itself — layered radial gradients + glass surface */
+.ailee-orb__sphere {
+  position: relative;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle at 38% 30%, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0) 28%),
+    radial-gradient(circle at 50% 50%, rgba(96, 165, 250, 0.55) 0%, rgba(56, 189, 248, 0.35) 45%, rgba(15, 23, 42, 0.85) 100%);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  box-shadow:
+    0 0 60px rgba(56, 189, 248, 0.25),
+    inset 0 0 60px rgba(15, 23, 42, 0.55),
+    inset 0 0 90px rgba(96, 165, 250, 0.15);
+  backdrop-filter: blur(6px);
+  animation: aileeOrbBreathe 6s ease-in-out infinite;
+}
+
+/* Inner luminous core */
+.ailee-orb__core {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 50% 45%,
+    rgba(255, 255, 255, 0.9) 0%,
+    rgba(96, 165, 250, 0.7) 35%,
+    rgba(56, 189, 248, 0.25) 70%,
+    transparent 100%
+  );
+  filter: blur(2px);
+  animation: aileeCorePulse 4s ease-in-out infinite;
+}
+
+/* Label + status phrase */
+.ailee-orb__caption {
+  margin-top: 2rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.ailee-orb__name {
+  font-size: 1.5rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-primary);
+}
+
+.ailee-orb__status {
+  font-size: 0.95rem;
+  letter-spacing: 0.06em;
+  color: var(--color-text-subtle);
+}
+
+/* ── State modifiers ── */
+
+/* standing-by: calm default (handled by base styles) */
+
+/* briefing: slightly brighter, steady */
+.ailee-orb--briefing .ailee-orb__sphere {
+  box-shadow:
+    0 0 75px rgba(56, 189, 248, 0.32),
+    inset 0 0 60px rgba(15, 23, 42, 0.5),
+    inset 0 0 90px rgba(96, 165, 250, 0.2);
+}
+
+/* listening: faster, lively pulse */
+.ailee-orb--listening .ailee-orb__core {
+  animation-duration: 1.8s;
+}
+
+.ailee-orb--listening .ailee-orb__halo {
+  animation-duration: 3s;
+}
+
+/* thinking: slower, contemplative drift */
+.ailee-orb--thinking .ailee-orb__sphere,
+.ailee-orb--thinking .ailee-orb__halo {
+  animation-duration: 9s;
+}
+
+.ailee-orb--thinking .ailee-orb__core {
+  animation-duration: 6s;
+}
+
+/* dimmed: low energy, subdued glow */
+.ailee-orb--dimmed {
+  opacity: 0.55;
+}
+
+.ailee-orb--dimmed .ailee-orb__sphere,
+.ailee-orb--dimmed .ailee-orb__halo,
+.ailee-orb--dimmed .ailee-orb__core {
+  animation-duration: 12s;
+}
+
+/* attention: subtle warm emphasis without changing accent palette */
+.ailee-orb--attention .ailee-orb__halo {
+  background: radial-gradient(
+    circle at 50% 45%,
+    rgba(248, 180, 120, 0.32) 0%,
+    rgba(239, 68, 68, 0.16) 45%,
+    transparent 72%
+  );
+}
+
+@keyframes aileeOrbBreathe {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.03);
+  }
+}
+
+@keyframes aileeHaloBreathe {
+  0%, 100% {
+    opacity: 0.75;
+    transform: translateX(-50%) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1.06);
+  }
+}
+
+@keyframes aileeCorePulse {
+  0%, 100% {
+    opacity: 0.85;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
 }
