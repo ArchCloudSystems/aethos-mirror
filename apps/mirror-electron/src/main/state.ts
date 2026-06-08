@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type { MirrorMode, MirrorState } from "@aethos/mirror-protocol";
 
 const now = (): string => new Date().toISOString();
@@ -23,7 +24,7 @@ export function setMirrorMode(mode: MirrorMode): MirrorState {
   mirrorState.mode = mode;
   mirrorState.updatedAt = now();
   mirrorState.lastCommand = {
-    id: crypto.randomUUID(),
+    id: randomUUID(),
     type: "set_mode",
     ok: true,
     message: `Mode set to ${mode}`,
