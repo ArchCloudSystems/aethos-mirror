@@ -1,5 +1,6 @@
 import http from "node:http";
 import type { MirrorMode } from "@aethos/mirror-protocol";
+import { getAileeConfigStatus, getAileeModulesStatus } from "./config";
 import { getMirrorState, setMirrorMode } from "./state";
 
 const VALID_MODES = new Set<MirrorMode>([
@@ -64,6 +65,24 @@ export function startApiServer(port: number): http.Server {
 
       if (method === "GET" && url.pathname === "/state") {
         sendJson(res, 200, getMirrorState());
+        return;
+      }
+
+      if (method === "GET" && url.pathname === "/config/status") {
+        // Sanitized status only — never exposes raw keys or tokens.
+        sendJson(res, 200, {
+          ok: true,
+          config: getAileeConfigStatus()
+        });
+        return;
+      }
+
+      if (method === "GET" && url.pathname === "/modules/status") {
+        // Read-only, secret-free module status map. No raw keys/tokens.
+        sendJson(res, 200, {
+          ok: true,
+          modules: getAileeModulesStatus()
+        });
         return;
       }
 

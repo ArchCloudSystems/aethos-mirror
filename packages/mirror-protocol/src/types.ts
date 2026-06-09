@@ -28,3 +28,62 @@ export interface MirrorState {
   lastCommand: MirrorCommandReceipt | null;
   updatedAt: string;
 }
+
+/**
+ * Telegram delivery mode. `disabled` means no token is configured or the
+ * module is turned off; otherwise it reflects how updates are received.
+ */
+export type TelegramMode = "polling" | "webhook" | "disabled";
+
+/**
+ * Read-only, secret-free status for each Ailee module. These shapes never
+ * carry raw API keys, tokens, or other credentials — only booleans and
+ * non-sensitive identifiers (provider names, location label, mode).
+ */
+export interface TelegramModuleStatus {
+  configured: boolean;
+  enabled: boolean;
+  mode: TelegramMode;
+}
+
+export interface ElevenLabsModuleStatus {
+  configured: boolean;
+  enabled: boolean;
+}
+
+export interface GoogleModuleStatus {
+  configured: boolean;
+  calendarEnabled: boolean;
+  gmailEnabled: boolean;
+}
+
+export interface NewsModuleStatus {
+  configured: boolean;
+  provider: string;
+}
+
+export interface WeatherModuleStatus {
+  configured: boolean;
+  provider: string;
+  location: string;
+}
+
+export interface MapModuleStatus {
+  configured: boolean;
+  provider: string;
+}
+
+export interface AetherCoreBridgeModuleStatus {
+  configured: boolean;
+  enabled: boolean;
+}
+
+export interface AileeModulesStatus {
+  telegram: TelegramModuleStatus;
+  elevenLabs: ElevenLabsModuleStatus;
+  google: GoogleModuleStatus;
+  news: NewsModuleStatus;
+  weather: WeatherModuleStatus;
+  map: MapModuleStatus;
+  aetherCoreBridge: AetherCoreBridgeModuleStatus;
+}
