@@ -4,107 +4,75 @@ import type {
   TelegramStatus
 } from "@aethos/mirror-protocol";
 import TelegramBot from "node-telegram-bot-api";
+import { getTelegramProviderConfig } from "../config";
 
 /**
  * Telegram skeleton adapter for Ailee.
  *
+ * Configuration is read from the SAME loaded config source as
+ * `/modules/status` (see {@link getTelegramProviderConfig}) so adapter
+ * behavior and reported status can never drift apart. We do NOT read raw
+ * `process.env` here.
+ *
  * Strictly guarded: a message is only sent when BOTH a bot token and at least
- * one valid allow-listed chat id are configured. No polling loop is started
- * unless TELEGRAM_POLLING_ENABLED=true (polling wiring is intentionally left
- * for a later pass). The bot token is NEVER returned or logged.
+ * one allow-listed chat id are configured. No polling loop is started unless
+ * TELEGRAM_POLLING_ENABLED=true (polling wiring is intentionally left for a
+ * later pass). The bot token and raw chat ids are NEVER returned or logged.
  */
 
 const MAX_MESSAGE_LENGTH = 4096;
 
-function readString(key: string): string | undefined {
-  const value = process.env[key];
-  if (value === undefined) {
-    return undefined;
-  }
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : undefined;
-}
-
-function isTruthy(value: string | undefined): boolean {
-  if (value === undefined) {
-    return false;
-  }
-  return ["1", "true", "yes", "on"].includes(value.trim().toLowerCase());
-}
-
-/**
- * Parse and validate the allow-listed chat ids. A valid id is a non-empty
- * integer (Telegram chat ids may be negative for groups). Invalid entries are
- * dropped.
- */
-function parseAllowedChatIds(): number[] {
-  const raw = readString("TELEGRAM_ALLOWED_CHAT_IDS");
-  if (!raw) {
-    return [];
-  }
-  const ids: number[] = [];
-  for (const part of raw.split(",")) {
-    const trimmed = part.trim();
-    if (trimmed.length === 0) {
-      continue;
-    }
-    if (!/^-?\d+$/.test(trimmed)) {
-      continue;
-    }
-    const parsed = Number(trimmed);
-    if (Number.isSafeInteger(parsed)) {
-      ids.push(parsed);
-    }
-  }
-  return ids;
-}
-
 function resolveMode(
   hasToken: boolean,
   hasChats: boolean,
-  enabled: boolean
+  enabled: boolean,
+  pollingEnabled: boolean,
+  hasWebhook: boolean
 ): TelegramMode {
   if (!hasToken || !hasChats || !enabled) {
     return "disabled";
   }
-  if (isTruthy(readString("TELEGRAM_POLLING_ENABLED"))) {
+  if (pollingEnabled) {
     return "polling";
   }
-  if (readString("TELEGRAM_WEBHOOK_URL")) {
+  if (hasWebhook) {
     return "webhook";
   }
   return "disabled";
 }
 
 /**
- * Report read-only Telegram status. Never exposes the token; only reports
- * whether things are configured plus the count of valid allow-listed chats.
+ * Report read-only Telegram status. Never exposes the token or raw chat ids;
+ * only reports whether things are configured plus the count of allow-listed
+ * chats. Mirrors the configured/enabled logic used by `/modules/status`.
  */
 export function getTelegramStatus(): TelegramStatus {
-  const hasToken = Boolean(readString("TELEGRAM_BOT_TOKEN"));
-  const allowedChatIds = parseAllowedChatIds();
+  const config = getTelegramProviderConfig();
+  const hasToken = config.botToken !== null;
+  const allowedChatIds = config.allowedChatIds;
   const hasChats = allowedChatIds.length > 0;
-  // Master Ailee switch; defaults to enabled when unset.
-  const aileeEnabled =
-    readString("AILEE_ENABLED") === undefined
-      ? true
-      : isTruthy(readString("AILEE_ENABLED"));
 
   const configured = hasToken && hasChats;
-  const enabled = configured && aileeEnabled;
+  const enabled = configured && config.aileeEnabled;
 
   return {
     configured,
     enabled,
-    mode: resolveMode(hasToken, hasChats, enabled),
+    mode: resolveMode(
+      hasToken,
+      hasChats,
+      enabled,
+      config.pollingEnabled,
+      config.webhookUrl !== null
+    ),
     allowedChatCount: allowedChatIds.length
   };
 }
 
 /**
  * Send a message to all allow-listed chats. Only proceeds when token + at
- * least one valid chat id are configured. Always resolves — never throws.
- * The token is never logged or returned.
+ * least one allow-listed chat id are configured. Always resolves — never
+ * throws. The token and raw chat ids are never logged or returned.
  */
 export async function sendTelegramMessage(
   text: unknown
@@ -125,14 +93,15 @@ export async function sendTelegramMessage(
     return failure(`Message exceeds ${MAX_MESSAGE_LENGTH} characters`);
   }
 
-  const token = readString("TELEGRAM_BOT_TOKEN");
-  const allowedChatIds = parseAllowedChatIds();
+  const config = getTelegramProviderConfig();
+  const token = config.botToken;
+  const allowedChatIds = config.allowedChatIds;
 
   if (!token) {
     return failure("Telegram is not configured");
   }
   if (allowedChatIds.length === 0) {
-    return failure("No valid allow-listed chat ids configured");
+    return failure("No allow-listed chat ids configured");
   }
 
   try {
@@ -142,12 +111,15 @@ export async function sendTelegramMessage(
     let deliveredCount = 0;
     for (const chatId of allowedChatIds) {
       try {
+        // Chat ids are kept as strings so large group/supergroup ids are
+        // never coerced through a lossy Number. node-telegram-bot-api accepts
+        // a string chat id.
         await bot.sendMessage(chatId, message);
         deliveredCount += 1;
       } catch (innerError) {
         const detail =
           innerError instanceof Error ? innerError.message : "unknown error";
-        // Never log the token; chat-scoped failure only.
+        // Never log the token or the raw chat id; chat-scoped failure only.
         console.warn(
           `[aethos-mirror] telegram delivery failed for a chat: ${detail}`
         );

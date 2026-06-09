@@ -160,6 +160,16 @@ export interface CalendarFeed {
   events: CalendarEvent[];
   /** ISO timestamp of when this feed was produced. */
   fetchedAt: string;
+  /**
+   * Stable, secret-free machine code describing why a fallback was produced
+   * (e.g. "not_configured", "provider_error"). Absent on a live feed.
+   */
+  errorCode?: string;
+  /**
+   * Short, secret-free human-readable reason for a fallback. Never contains
+   * tokens, secrets, or private addresses. Absent on a live feed.
+   */
+  errorMessage?: string;
 }
 
 /**
@@ -189,6 +199,16 @@ export interface EmailSummary {
   recent: EmailSnippet[];
   /** ISO timestamp of when this summary was produced. */
   fetchedAt: string;
+  /**
+   * Stable, secret-free machine code describing why a fallback was produced
+   * (e.g. "not_configured", "provider_error"). Absent on a live summary.
+   */
+  errorCode?: string;
+  /**
+   * Short, secret-free human-readable reason for a fallback. Never contains
+   * tokens, secrets, or private addresses. Absent on a live summary.
+   */
+  errorMessage?: string;
 }
 
 /**

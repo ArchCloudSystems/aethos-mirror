@@ -5,12 +5,18 @@ import type {
   EmailSummary
 } from "@aethos/mirror-protocol";
 import { google } from "googleapis";
+import { getGoogleProviderConfig } from "../config";
 
 /** OAuth2 client type derived from googleapis (avoids a direct dep import). */
 type OAuth2Client = InstanceType<typeof google.auth.OAuth2>;
 
 /**
  * Read-only Google Calendar + Gmail summary adapter for Ailee.
+ *
+ * Configuration is read from the SAME loaded config source as
+ * `/modules/status` (see {@link getGoogleProviderConfig}) so adapter behavior
+ * and reported status can never drift apart. We do NOT read raw `process.env`
+ * here — the app config loader normalizes env once at startup.
  *
  * Uses an OAuth2 client built from the configured client id/secret/refresh
  * token. STRICTLY read-only: only calendar.events.list, gmail.users.messages
@@ -24,83 +30,91 @@ const CALENDAR_MAX_EVENTS = 10;
 const EMAIL_MAX_SNIPPETS = 5;
 const DEFAULT_GMAIL_MAX = 5;
 
-function readString(key: string): string | undefined {
-  const value = process.env[key];
-  if (value === undefined) {
-    return undefined;
-  }
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : undefined;
-}
-
-function readNumber(key: string, fallback: number): number {
-  const raw = readString(key);
-  if (raw === undefined) {
-    return fallback;
-  }
-  const parsed = Number(raw);
-  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : fallback;
-}
-
 /**
- * Build an OAuth2 client from env, or return null when not fully configured.
- * The refresh token never leaves this function's closure.
+ * Build an OAuth2 client from the shared config, or return null when not fully
+ * configured. The refresh token never leaves this function's closure.
  */
 function buildOAuthClient(): OAuth2Client | null {
-  const clientId = readString("GOOGLE_CLIENT_ID");
-  const clientSecret = readString("GOOGLE_CLIENT_SECRET");
-  const refreshToken = readString("GOOGLE_REFRESH_TOKEN");
-  const redirectUri = readString("GOOGLE_REDIRECT_URI");
+  const config = getGoogleProviderConfig();
 
-  if (!clientId || !clientSecret || !refreshToken) {
+  if (
+    !config.configured ||
+    !config.clientId ||
+    !config.clientSecret ||
+    !config.refreshToken
+  ) {
     return null;
   }
 
-  const client = new google.auth.OAuth2(clientId, clientSecret, redirectUri);
-  client.setCredentials({ refresh_token: refreshToken });
+  const client = new google.auth.OAuth2(
+    config.clientId,
+    config.clientSecret,
+    config.redirectUri ?? undefined
+  );
+  client.setCredentials({ refresh_token: config.refreshToken });
   return client;
 }
 
-function calendarFallback(): CalendarFeed {
+function calendarFallback(
+  errorCode: string,
+  errorMessage: string
+): CalendarFeed {
   return {
     source: "fallback",
     events: [],
-    fetchedAt: new Date().toISOString()
+    fetchedAt: new Date().toISOString(),
+    errorCode,
+    errorMessage
   };
 }
 
-function emailFallback(): EmailSummary {
+function emailFallback(errorCode: string, errorMessage: string): EmailSummary {
   return {
     source: "fallback",
     unreadCount: 0,
     recent: [],
-    fetchedAt: new Date().toISOString()
+    fetchedAt: new Date().toISOString(),
+    errorCode,
+    errorMessage
   };
 }
 
 /**
+ * Reduce an unknown error to a short, secret-free message safe to surface and
+ * log. Provider SDK errors can embed request URLs / params; we keep only the
+ * first line and never include the original token-bearing context.
+ */
+function safeErrorMessage(error: unknown): string {
+  if (error instanceof Error && typeof error.message === "string") {
+    const firstLine = error.message.split("\n")[0]?.trim();
+    if (firstLine && firstLine.length > 0) {
+      return firstLine.slice(0, 200);
+    }
+  }
+  return "unknown provider error";
+}
+
+/**
  * Fetch upcoming calendar events from the configured calendar ids. Always
- * resolves — returns a fallback placeholder on any failure.
+ * resolves — returns a fallback placeholder (with a safe error code/message)
+ * on any failure.
  */
 export async function getCalendarFeed(): Promise<CalendarFeed> {
+  const config = getGoogleProviderConfig();
   const auth = buildOAuthClient();
   if (!auth) {
-    return calendarFallback();
+    return calendarFallback("not_configured", "Google is not configured");
   }
 
-  const calendarIds = (readString("GOOGLE_CALENDAR_IDS") ?? "primary")
-    .split(",")
-    .map((id) => id.trim())
-    .filter((id) => id.length > 0);
-
-  if (calendarIds.length === 0) {
-    calendarIds.push("primary");
-  }
+  const calendarIds =
+    config.calendarIds.length > 0 ? [...config.calendarIds] : ["primary"];
 
   try {
     const calendar = google.calendar({ version: "v3", auth });
     const timeMin = new Date().toISOString();
     const collected: CalendarEvent[] = [];
+    let succeededForAny = false;
+    let lastError: string | null = null;
 
     for (const calendarId of calendarIds) {
       try {
@@ -112,6 +126,7 @@ export async function getCalendarFeed(): Promise<CalendarFeed> {
           maxResults: CALENDAR_MAX_EVENTS
         });
 
+        succeededForAny = true;
         const items = response.data.items ?? [];
         for (const item of items) {
           const start = item.start?.dateTime ?? item.start?.date ?? null;
@@ -127,12 +142,20 @@ export async function getCalendarFeed(): Promise<CalendarFeed> {
           });
         }
       } catch (innerError) {
-        const message =
-          innerError instanceof Error ? innerError.message : "unknown error";
+        lastError = safeErrorMessage(innerError);
         console.warn(
-          `[aethos-mirror] calendar fetch failed for a calendar: ${message}`
+          `[aethos-mirror] calendar fetch failed for a calendar: ${lastError}`
         );
       }
+    }
+
+    // If every configured calendar failed, surface a fallback so callers can
+    // tell live-but-empty apart from a provider failure.
+    if (!succeededForAny) {
+      return calendarFallback(
+        "provider_error",
+        lastError ?? "Calendar provider request failed"
+      );
     }
 
     // Sort by start ascending; nulls last. Cap to the global max.
@@ -152,9 +175,9 @@ export async function getCalendarFeed(): Promise<CalendarFeed> {
       fetchedAt: new Date().toISOString()
     };
   } catch (error) {
-    const message = error instanceof Error ? error.message : "unknown error";
+    const message = safeErrorMessage(error);
     console.warn(`[aethos-mirror] calendar fetch failed: ${message}`);
-    return calendarFallback();
+    return calendarFallback("provider_error", message);
   }
 }
 
@@ -174,16 +197,18 @@ function headerValue(
 /**
  * Fetch an unread email summary: unread count plus a few recent snippets.
  * Read-only (messages.list + messages.get metadata). Always resolves —
- * returns a fallback placeholder on any failure.
+ * returns a fallback placeholder (with a safe error code/message) on any
+ * failure.
  */
 export async function getEmailSummary(): Promise<EmailSummary> {
+  const config = getGoogleProviderConfig();
   const auth = buildOAuthClient();
   if (!auth) {
-    return emailFallback();
+    return emailFallback("not_configured", "Google is not configured");
   }
 
   const maxResults = Math.min(
-    readNumber("GMAIL_SUMMARY_MAX_RESULTS", DEFAULT_GMAIL_MAX),
+    config.gmailMaxResults ?? DEFAULT_GMAIL_MAX,
     EMAIL_MAX_SNIPPETS
   );
 
@@ -229,10 +254,10 @@ export async function getEmailSummary(): Promise<EmailSummary> {
           receivedAt: internalDate
         });
       } catch (innerError) {
-        const message2 =
-          innerError instanceof Error ? innerError.message : "unknown error";
+        // Never log the From/Subject (private addresses); reason only.
+        const reason = safeErrorMessage(innerError);
         console.warn(
-          `[aethos-mirror] email snippet fetch failed: ${message2}`
+          `[aethos-mirror] email snippet fetch failed: ${reason}`
         );
       }
     }
@@ -244,8 +269,8 @@ export async function getEmailSummary(): Promise<EmailSummary> {
       fetchedAt: new Date().toISOString()
     };
   } catch (error) {
-    const message = error instanceof Error ? error.message : "unknown error";
+    const message = safeErrorMessage(error);
     console.warn(`[aethos-mirror] email summary fetch failed: ${message}`);
-    return emailFallback();
+    return emailFallback("provider_error", message);
   }
 }
