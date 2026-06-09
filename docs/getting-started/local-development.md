@@ -97,6 +97,27 @@ Launches the Electron app with the renderer in dev mode. The local module API
 starts on `127.0.0.1` at the configured port (`AETHOS_MIRROR_PORT`, default
 `3055`).
 
+### Integrations & Setup panel
+
+The renderer includes an **Integrations** panel for checking your configuration
+visually. With the app running, click the **Integrations** button (bottom-right
+of the dashboard) to open it. The panel shows:
+
+- assistant name, whether setup is complete, the config source, and whether the
+  local config + secrets files are present;
+- a readiness card per provider (Weather, News, Telegram, Voice, Google, LLM,
+  LibreChat, Assistant Bridge) with enabled / configured state and the count and
+  names of any missing fields — **never any secret values**;
+- a **first-run panel** when no local config exists yet, pointing you at
+  `pnpm setup`, `pnpm providers:check`, and `pnpm dev`;
+- an **LLM chat test**: type a message, click **Send**, and the panel calls
+  `POST /llm/chat`, showing the reply plus the provider/model/status. When the
+  LLM is not configured it shows a graceful, secret-free message instead.
+
+The panel reads only from the local API (`127.0.0.1`); it makes no external
+calls and displays no secrets. The mirror dashboard itself is unchanged — the
+panel is an overlay you open and close on demand.
+
 ---
 
 ## Linux Electron notes (sandbox / GPU)

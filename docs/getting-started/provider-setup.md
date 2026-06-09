@@ -278,3 +278,14 @@ curl -s http://127.0.0.1:3055/modules/status
 registry the CLI uses. Each module also reports `configured` / `enabled` flags
 and non-sensitive descriptors only. For the full endpoint list, see
 [local-development.md](local-development.md).
+
+### In the app: the Integrations panel
+
+When the mirror is running, you can also verify everything visually. Click the
+**Integrations** button (bottom-right of the dashboard) to open the
+Integrations & Setup panel. It shows setup status and a readiness card for every
+provider — enabled/configured state plus the names of any missing fields, never
+any secret values — and includes a local **LLM chat test** so you can send a
+message through `POST /llm/chat` and see the reply. If no local config exists
+yet, it shows a first-run panel pointing you at `pnpm setup`. See
+[local-development.md](local-development.md#integrations--setup-panel).

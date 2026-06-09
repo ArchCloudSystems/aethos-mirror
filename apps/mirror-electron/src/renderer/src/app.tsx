@@ -2,6 +2,7 @@ import { Component, useState, useEffect } from "react";
 import type { ErrorInfo, ReactNode } from "react";
 import type { MirrorMode, MirrorState } from "@aethos/mirror-protocol";
 import { MirrorOrb, MirrorModules } from "./components/ModeComponents";
+import { IntegrationsPanel } from "./components/IntegrationsPanel";
 import { useMirrorModules } from "./hooks/useMirrorModules";
 import "./global.css";
 
@@ -543,6 +544,7 @@ function ErrorMode({ error }: { error: string }): JSX.Element {
 
 function MirrorRendererInner(): JSX.Element {
   const { state, loading, error } = useMirrorApi();
+  const [integrationsOpen, setIntegrationsOpen] = useState(false);
 
   if (loading) {
     return (
@@ -576,7 +578,24 @@ function MirrorRendererInner(): JSX.Element {
 
   const ModeComponent = modeComponents[currentMode] || LandingMode;
 
-  return <ModeComponent />;
+  // The dashboard renders as before. A lightweight launcher overlays the
+  // Integrations / Setup panel on top without altering any mode component.
+  return (
+    <>
+      <ModeComponent />
+      <button
+        type="button"
+        className="integration-launcher"
+        onClick={() => setIntegrationsOpen(true)}
+        aria-label="Open integrations and setup"
+      >
+        Integrations
+      </button>
+      {integrationsOpen ? (
+        <IntegrationsPanel onClose={() => setIntegrationsOpen(false)} />
+      ) : null}
+    </>
+  );
 }
 
 export function MirrorRenderer(): JSX.Element {

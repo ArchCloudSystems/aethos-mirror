@@ -1,0 +1,379 @@
+/* IntegrationsPanel — Integrations / Setup overlay for the Aethos Mirror
+   renderer. Uses the existing global design tokens so it matches the dashboard
+   aesthetic without altering any shared variables. */
+
+.integration-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 4vh 4vw;
+  overflow-y: auto;
+  background: rgba(2, 6, 23, 0.82);
+  backdrop-filter: blur(6px);
+}
+
+.integration-panel {
+  width: min(1100px, 100%);
+  background: var(--color-panel);
+  border: 1px solid var(--color-border);
+  border-radius: 18px;
+  box-shadow: var(--shadow-glass);
+  padding: 28px 30px 34px;
+}
+
+.integration-panel__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.integration-panel__head h1 {
+  margin: 4px 0 0;
+  font-size: 1.6rem;
+  color: var(--color-text-primary);
+}
+
+.integration-panel__head .eyebrow {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.7rem;
+  color: var(--color-accent);
+}
+
+.integration-panel__actions {
+  display: flex;
+  gap: 10px;
+}
+
+.integration-btn {
+  border: 1px solid var(--color-border);
+  background: rgba(15, 23, 42, 0.6);
+  color: var(--color-text-primary);
+  border-radius: 10px;
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.integration-btn:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.integration-btn--ghost {
+  background: transparent;
+}
+
+/* Summary row */
+.integration-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px;
+  margin-bottom: 26px;
+}
+
+.integration-summary > div {
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.integration-summary__label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--color-text-subtle);
+}
+
+.integration-summary strong {
+  color: var(--color-text-primary);
+  font-size: 1.05rem;
+}
+
+/* Sections */
+.integration-section {
+  margin-top: 26px;
+}
+
+.integration-section__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.integration-section__head h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--color-text-primary);
+}
+
+/* Provider cards */
+.integration-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.integration-card {
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.integration-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.integration-card__head h4 {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--color-text-primary);
+}
+
+.integration-card__meta {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 0;
+}
+
+.integration-card__meta div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.integration-card__meta dt {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-text-subtle);
+}
+
+.integration-card__meta dd {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-text-primary);
+}
+
+.integration-card__status {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-text-subtle);
+}
+
+.integration-card__missing {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--color-accent-sky);
+  word-break: break-word;
+}
+
+/* Status pills */
+.integration-pill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.integration-pill--ok {
+  color: var(--color-accent);
+  border-color: rgba(52, 211, 153, 0.4);
+  background: rgba(52, 211, 153, 0.1);
+}
+
+.integration-pill--warn {
+  color: var(--color-accent-sky);
+  border-color: rgba(56, 189, 248, 0.4);
+  background: rgba(56, 189, 248, 0.1);
+}
+
+.integration-pill--off {
+  color: var(--color-text-subtle);
+  border-color: var(--color-border);
+  background: rgba(148, 163, 184, 0.08);
+}
+
+/* First-run panel */
+.integration-firstrun {
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  padding: 26px;
+  text-align: center;
+}
+
+.integration-firstrun h3 {
+  margin: 0 0 10px;
+  font-size: 1.3rem;
+  color: var(--color-text-primary);
+}
+
+.integration-firstrun p {
+  margin: 6px 0;
+  color: var(--color-text-subtle);
+}
+
+.integration-firstrun__commands {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 16px auto;
+  padding: 16px 26px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  text-align: left;
+}
+
+.integration-firstrun__commands code {
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color: var(--color-accent);
+  font-size: 0.95rem;
+}
+
+.integration-firstrun__note {
+  font-size: 0.8rem;
+}
+
+/* LLM meta */
+.integration-llm-meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-size: 0.8rem;
+  color: var(--color-text-subtle);
+}
+
+.integration-llm-input {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.integration-llm-input input {
+  flex: 1;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 11px 14px;
+  color: var(--color-text-primary);
+  font-size: 0.9rem;
+}
+
+.integration-llm-input input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.integration-llm-input button {
+  border: 1px solid var(--color-accent);
+  background: rgba(52, 211, 153, 0.12);
+  color: var(--color-accent);
+  border-radius: 10px;
+  padding: 11px 22px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.integration-llm-input button:hover:not(:disabled) {
+  background: rgba(52, 211, 153, 0.2);
+}
+
+.integration-llm-input button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.integration-llm-result {
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 16px;
+  min-height: 56px;
+}
+
+.integration-llm-reply__meta {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-size: 0.75rem;
+  color: var(--color-text-subtle);
+  margin-bottom: 8px;
+}
+
+.integration-llm-reply__text {
+  margin: 0;
+  color: var(--color-text-primary);
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
+.integration-llm-error {
+  color: var(--color-accent-red);
+  font-size: 0.9rem;
+}
+
+.integration-hint {
+  color: var(--color-text-subtle);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.integration-hint code {
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color: var(--color-accent);
+  background: rgba(52, 211, 153, 0.08);
+  padding: 1px 6px;
+  border-radius: 6px;
+}
+
+/* Floating launcher button on the dashboard */
+.integration-launcher {
+  position: fixed;
+  bottom: 18px;
+  right: 18px;
+  z-index: 40;
+  border: 1px solid var(--color-border);
+  background: rgba(15, 23, 42, 0.85);
+  color: var(--color-text-primary);
+  border-radius: 12px;
+  padding: 10px 16px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.integration-launcher:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}

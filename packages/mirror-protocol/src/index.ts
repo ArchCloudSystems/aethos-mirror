@@ -29,7 +29,7 @@ export type {
   VoiceTtsResult,
   WeatherModuleStatus,
   WeatherReading
-} from "./types";
+} from "./types.js";
 
 // Provider registry — runtime values (constants + pure derivation functions).
 export {
@@ -37,7 +37,7 @@ export {
   NEXT_COMMANDS,
   deriveProviderReadiness,
   deriveSetupStatus
-} from "./provider-registry";
+} from "./provider-registry.js";
 
 // Provider registry — types.
 export type {
@@ -49,4 +49,4 @@ export type {
   ProviderId,
   ProviderReadiness,
   SetupStatus
-} from "./provider-registry";
+} from "./provider-registry.js";
