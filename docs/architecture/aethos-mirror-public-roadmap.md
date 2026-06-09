@@ -107,7 +107,7 @@ Tracking branch: `public/aethos-mirror-foundation`.
 ## Explicit Non-Goals (Public)
 
 ❌ Bundled AetherCore integration
-❌ CAILEAN assistant or proprietary persona content
+❌ Proprietary assistant logic or proprietary persona content
 ❌ Operator tools / control-plane authority
 ❌ Any pre-provisioned API keys or tokens
 ❌ Cloud account requirement

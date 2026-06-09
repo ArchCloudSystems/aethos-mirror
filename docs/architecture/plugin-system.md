@@ -23,7 +23,7 @@ tree ships only its interface.
 | Voice provider | TTS / STT | Pluggable, BYOK | Private voice backends |
 | Ingress | Inbound message channels (Telegram) | Telegram (user token) | Additional channels |
 | Conversation surface | Chat UI surface | LibreChat | — |
-| Assistant bridge | Assistant brain behind the mirror | Default BYOK assistant | AetherCore / CAILEAN |
+| Assistant bridge | Assistant brain behind the mirror | Default BYOK assistant | Private downstream assistant backend |
 
 ---
 

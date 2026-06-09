@@ -34,7 +34,7 @@ boundary.
    │   Aethos Mirror (PUBLIC)    │                 │   Ailee Mirror (PRIVATE)    │
    │   open source, BYOK         │                 │   AetherCore-integrated     │
    │   no AetherCore             │                 │   memory + tools + policy   │
-   │   provider-agnostic         │                 │   CAILEAN / operator tools  │
+   │   provider-agnostic         │                 │   private assistant + tools │
    └─────────────────────────────┘                 └─────────────────────────────┘
 ```
 
@@ -109,7 +109,7 @@ contains none of the private-only concerns below.
 ### Belongs ONLY in PRIVATE (Ailee Mirror)
 
 ❌ AetherCore client, endpoints, or credentials
-❌ CAILEAN assistant logic and proprietary prompts
+❌ Proprietary assistant logic and proprietary prompts
 ❌ Operator tools and control-plane authority
 ❌ Proprietary model routing and policy enforcement
 ❌ Any bundled secrets, tokens, or production endpoints
@@ -123,7 +123,8 @@ contains none of the private-only concerns below.
    runtime config / environment. The private branch may *reference* AetherCore
    endpoints by config key, never by embedded value.
 2. **No AetherCore symbol in public.** No import, type, endpoint, or
-   string literal referencing AetherCore, CAILEAN, or operator tools may exist
+   string literal referencing AetherCore, the private assistant backend, or
+   operator tools may exist
    on `public/aethos-mirror-foundation`.
 3. **Public must build and run standalone.** The public product is fully
    functional with zero private dependencies.
@@ -148,7 +149,7 @@ default BYOK assistant; it never ships the AetherCore implementation.
    │ AssistantBridge         │        │   │ AetherCoreBridge        │
    │ (interface / contract)  │◄───────┼───│ implements AssistantBridge │
    │                         │        │   │ + memory + tools + policy │
-   │ default: BYOK assistant │        │   │ + CAILEAN routing         │
+   │ default: BYOK assistant │        │   │ + private model routing   │
    └─────────────────────────┘        │   └─────────────────────────┘
                                        │
    ships in public                     │  ships only in private
@@ -182,6 +183,6 @@ See `plugin-system.md` for how the bridge is registered as a plugin and
 | Shared memory DB | ✅ (local) | ✅ + AetherCore sync |
 | LibreChat surface | ✅ | ✅ |
 | Persona/tools self-update | ✅ (approval) | ✅ (approval + policy) |
-| AetherCore / CAILEAN | ❌ | ✅ |
+| AetherCore / private assistant backend | ❌ | ✅ |
 | Operator tools / control plane | ❌ | ✅ |
 | Approval policy enforcement | ❌ (workflow only) | ✅ (policy authority) |
