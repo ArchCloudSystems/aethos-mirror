@@ -843,6 +843,8 @@
   width: 100%;
   height: 100vh;
   overflow: hidden;
+  /* Sit above the #root ambience layers (z-index 0). */
+  z-index: 1;
 }
 
 /* Centered orb anchor */
@@ -1045,8 +1047,9 @@
   box-shadow: 0 0 12px rgba(96, 165, 250, 0.5);
 }
 
-/* Live OpenStreetMap/Leaflet panel — small and quiet */
+/* Static map panel — small and quiet (no external map provider) */
 .ailee-map {
+  position: relative;
   width: 160px;
   height: 90px;
   border-radius: 12px;
@@ -1055,11 +1058,22 @@
 }
 
 .ailee-map__canvas {
+  display: block;
   width: 100%;
   height: 100%;
-  /* Subdue the bright default OSM tiles so the panel stays calm. */
-  filter: grayscale(0.4) brightness(0.65) contrast(0.95);
+  /* Keep the panel calm and recessed within the ambience. */
+  filter: brightness(0.95) contrast(0.95);
   background: rgba(15, 23, 42, 0.4);
+}
+
+.ailee-map__label {
+  position: absolute;
+  bottom: 4px;
+  right: 6px;
+  font-size: 0.6rem;
+  letter-spacing: 0.04em;
+  color: rgba(203, 213, 225, 0.75);
+  text-shadow: 0 1px 2px rgba(2, 6, 23, 0.8);
 }
 
 .ailee-map__pin-icon {

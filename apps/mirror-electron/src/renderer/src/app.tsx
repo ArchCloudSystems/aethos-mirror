@@ -1,8 +1,87 @@
-import { useState, useEffect } from "react";
+import { Component, useState, useEffect } from "react";
+import type { ErrorInfo, ReactNode } from "react";
 import type { MirrorMode, MirrorState } from "@aethos/mirror-protocol";
 import { AileeOrb, MirrorModules } from "./components/ModeComponents";
 import { useAileeModules } from "./hooks/useAileeModules";
 import "./global.css";
+
+// ─────────────────────────────────────────────────────────────────────────────────────────
+// Error Boundary — keeps a runtime error inside the tree from blanking the app
+// ───────────────────────────────────────────────────────────────────────────────────────────
+
+interface ErrorBoundaryProps {
+  children: ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  message: string;
+}
+
+export class MirrorErrorBoundary extends Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false, message: "" };
+  }
+
+  static getDerivedStateFromError(error: unknown): ErrorBoundaryState {
+    const message =
+      error instanceof Error ? error.message : "Unexpected renderer error";
+    return { hasError: true, message };
+  }
+
+  componentDidCatch(error: unknown, info: ErrorInfo): void {
+    // Surface to the devtools console without crashing the tree.
+    // eslint-disable-next-line no-console
+    console.error("MirrorRenderer crashed:", error, info?.componentStack);
+  }
+
+  private handleReload = (): void => {
+    this.setState({ hasError: false, message: "" });
+    if (typeof window !== "undefined") {
+      window.location.reload();
+    }
+  };
+
+  render(): ReactNode {
+    if (this.state.hasError) {
+      return (
+        <main className="mirror-shell error">
+          <section className="mirror-card error-card">
+            <header className="error-header">
+              <p className="eyebrow">Ailee Mirror</p>
+              <h1>Something interrupted the mirror</h1>
+            </header>
+            <div className="error-content">
+              <div className="error-details">
+                <h3>Details</h3>
+                <p className="error-message">{this.state.message}</p>
+                <div className="error-info">
+                  <span>Time: {new Date().toLocaleTimeString()}</span>
+                  <span>API: http://127.0.0.1:3055</span>
+                </div>
+              </div>
+            </div>
+            <div className="error-actions">
+              <button
+                type="button"
+                className="retry-btn"
+                onClick={this.handleReload}
+              >
+                Reload mirror
+              </button>
+            </div>
+          </section>
+        </main>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 // ─────────────────────────────────────────────────────────────────────────────────────────
 // Mirror API Hook - Inlined for renderer-only operation
@@ -71,19 +150,27 @@ function useMirrorApi(port = DEFAULT_PORT) {
 function LandingMode(): JSX.Element {
   const modules = useAileeModules();
 
+  // Defensive fallbacks: never assume the hook returned a populated object.
+  // Each field already falls back to null inside the hook, but guarding here
+  // keeps a malformed/partial value from throwing inside MirrorModules.
+  const safeModules = modules ?? null;
+  const sendCommand = safeModules?.sendCommand;
+
   return (
     <main className="mirror-shell mirror-stage">
       <MirrorModules
         data={{
-          weather: modules.weather,
-          news: modules.news,
-          calendar: modules.calendar,
-          emailSummary: modules.emailSummary,
+          weather: safeModules?.weather ?? null,
+          news: safeModules?.news ?? null,
+          calendar: safeModules?.calendar ?? null,
+          emailSummary: safeModules?.emailSummary ?? null,
         }}
-        lastCommand={modules.lastCommand}
-        commandPending={modules.commandPending}
+        lastCommand={safeModules?.lastCommand ?? null}
+        commandPending={safeModules?.commandPending ?? false}
         onCommand={(command) => {
-          void modules.sendCommand(command);
+          if (typeof sendCommand === "function") {
+            void sendCommand(command);
+          }
         }}
       />
 
@@ -454,7 +541,7 @@ function ErrorMode({ error }: { error: string }): JSX.Element {
 // Main App Component
 // ─────────────────────────────────────────────────────────────────────────────────────────
 
-export function MirrorRenderer(): JSX.Element {
+function MirrorRendererInner(): JSX.Element {
   const { state, loading, error } = useMirrorApi();
 
   if (loading) {
@@ -490,6 +577,14 @@ export function MirrorRenderer(): JSX.Element {
   const ModeComponent = modeComponents[currentMode] || LandingMode;
 
   return <ModeComponent />;
+}
+
+export function MirrorRenderer(): JSX.Element {
+  return (
+    <MirrorErrorBoundary>
+      <MirrorRendererInner />
+    </MirrorErrorBoundary>
+  );
 }
 
 export default MirrorRenderer;

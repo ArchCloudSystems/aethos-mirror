@@ -1,77 +1,22 @@
-import type { ComponentType, Key, ReactNode } from "react";
-import { useEffect, useState } from "react";
-import {
-  MapContainer as RLMapContainer,
-  Marker as RLMarker,
-  TileLayer as RLTileLayer
-} from "react-leaflet";
-// leaflet ships no bundled type declarations and react-leaflet lists
-// @types/leaflet only as a devDependency, so this import is an untyped module.
-// It is used solely to build a lightweight divIcon for the marker.
-// @ts-expect-error untyped module (no bundled leaflet types available)
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
-
 /**
- * AileeMapPanel — small, quiet OpenStreetMap/Leaflet panel for the mirror.
+ * AileeMapPanel — safe static map fallback for the mirror.
  *
- * Renders a static (non-interactive) OSM map centered on the provided
- * coordinates, falling back to San Diego when none are supplied. Uses only the
- * free OpenStreetMap tile server — no Google Maps, no paid map provider. Does
- * NOT request browser geolocation.
+ * This panel previously rendered an interactive react-leaflet / Leaflet map.
+ * Leaflet executes module-level work (building a divIcon, importing its CSS)
+ * the moment the module is loaded, and react-leaflet can throw during render
+ * inside the Electron renderer. Any of those failures took down the entire
+ * MirrorRenderer component tree and produced a blank screen.
  *
- * Because leaflet ships no bundled types here, react-leaflet's prop types
- * collapse (they extend leaflet's *Options interfaces). We re-type the three
- * components we use with the exact props this panel passes, keeping usage
- * type-checked without pulling in a new dependency.
+ * To keep the mirror resilient, the map is rendered as a calm, fully static
+ * SVG vignette. It pulls in no external map provider, requests no browser
+ * geolocation, and performs no network calls — it simply visualises the
+ * supplied coordinates as a quiet pin over a stylised grid. The Ailee visual
+ * direction (soft glow, calm palette) is preserved.
  */
-
-interface MapContainerLikeProps {
-  center: [number, number];
-  zoom: number;
-  className?: string;
-  attributionControl?: boolean;
-  zoomControl?: boolean;
-  dragging?: boolean;
-  scrollWheelZoom?: boolean;
-  doubleClickZoom?: boolean;
-  touchZoom?: boolean;
-  boxZoom?: boolean;
-  keyboard?: boolean;
-  key?: Key;
-  children?: ReactNode;
-}
-
-interface TileLayerLikeProps {
-  url: string;
-  attribution?: string;
-}
-
-interface MarkerLikeProps {
-  position: [number, number];
-  icon?: unknown;
-}
-
-const MapContainer =
-  RLMapContainer as unknown as ComponentType<MapContainerLikeProps>;
-const TileLayer = RLTileLayer as unknown as ComponentType<TileLayerLikeProps>;
-const Marker = RLMarker as unknown as ComponentType<MarkerLikeProps>;
 
 // San Diego, CA — matches AETHOS_MIRROR_DEFAULT_LAT/LON in .env.example.
 const FALLBACK_LAT = 32.7157;
 const FALLBACK_LON = -117.1611;
-const DEFAULT_ZOOM = 12;
-
-const OSM_TILE_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
-const OSM_ATTRIBUTION = "© OpenStreetMap contributors";
-
-// A minimal divIcon avoids bundling Leaflet's default marker image assets,
-// which otherwise 404 under the bundler. Purely visual.
-const QUIET_PIN = L.divIcon({
-  className: "ailee-map__pin-icon",
-  iconSize: [12, 12],
-  iconAnchor: [6, 6]
-});
 
 interface AileeMapPanelProps {
   latitude?: number | null;
@@ -83,40 +28,55 @@ function isValidCoord(value: number | null | undefined): value is number {
   return typeof value === "number" && Number.isFinite(value);
 }
 
+function formatCoord(value: number, positive: string, negative: string): string {
+  const hemisphere = value >= 0 ? positive : negative;
+  return `${Math.abs(value).toFixed(2)}° ${hemisphere}`;
+}
+
 export function AileeMapPanel({
   latitude,
-  longitude,
-  zoom = DEFAULT_ZOOM
+  longitude
 }: AileeMapPanelProps): JSX.Element {
   const lat = isValidCoord(latitude) ? latitude : FALLBACK_LAT;
   const lon = isValidCoord(longitude) ? longitude : FALLBACK_LON;
 
-  // Re-mount the map when coordinates change so the static center updates
-  // without enabling interactive panning.
-  const [renderKey, setRenderKey] = useState(`${lat},${lon},${zoom}`);
-  useEffect(() => {
-    setRenderKey(`${lat},${lon},${zoom}`);
-  }, [lat, lon, zoom]);
+  const label = `${formatCoord(lat, "N", "S")} · ${formatCoord(lon, "E", "W")}`;
 
   return (
-    <div className="ailee-map" aria-label="Map">
-      <MapContainer
-        key={renderKey}
-        center={[lat, lon]}
-        zoom={zoom}
+    <div className="ailee-map" aria-label={`Map — ${label}`}>
+      <svg
         className="ailee-map__canvas"
-        attributionControl={false}
-        zoomControl={false}
-        dragging={false}
-        scrollWheelZoom={false}
-        doubleClickZoom={false}
-        touchZoom={false}
-        boxZoom={false}
-        keyboard={false}
+        viewBox="0 0 120 80"
+        preserveAspectRatio="xMidYMid slice"
+        role="img"
+        aria-hidden="true"
       >
-        <TileLayer url={OSM_TILE_URL} attribution={OSM_ATTRIBUTION} />
-        <Marker position={[lat, lon]} icon={QUIET_PIN} />
-      </MapContainer>
+        <defs>
+          <radialGradient id="ailee-map-glow" cx="50%" cy="42%" r="60%">
+            <stop offset="0%" stopColor="rgba(96, 165, 250, 0.28)" />
+            <stop offset="100%" stopColor="rgba(2, 6, 23, 0)" />
+          </radialGradient>
+        </defs>
+
+        <rect x="0" y="0" width="120" height="80" fill="#050b1a" />
+        <rect x="0" y="0" width="120" height="80" fill="url(#ailee-map-glow)" />
+
+        {/* Quiet grid lines */}
+        <g stroke="rgba(148, 163, 184, 0.16)" strokeWidth="0.5">
+          <line x1="0" y1="20" x2="120" y2="20" />
+          <line x1="0" y1="40" x2="120" y2="40" />
+          <line x1="0" y1="60" x2="120" y2="60" />
+          <line x1="30" y1="0" x2="30" y2="80" />
+          <line x1="60" y1="0" x2="60" y2="80" />
+          <line x1="90" y1="0" x2="90" y2="80" />
+        </g>
+
+        {/* Center pin */}
+        <circle cx="60" cy="40" r="9" fill="rgba(56, 189, 248, 0.12)" />
+        <circle cx="60" cy="40" r="3.2" fill="#38bdf8" />
+        <circle cx="60" cy="40" r="3.2" fill="none" stroke="rgba(56, 189, 248, 0.6)" strokeWidth="0.8" />
+      </svg>
+      <span className="ailee-map__label">{label}</span>
     </div>
   );
 }

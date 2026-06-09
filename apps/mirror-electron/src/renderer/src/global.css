@@ -54,7 +54,6 @@ body {
    Both layers are non-interactive and sit behind the content. */
 #root {
   position: relative;
-  isolation: isolate;
   background:
     radial-gradient(120% 120% at 50% -10%, #060d1f 0%, #030712 55%, #010208 100%);
 }
@@ -64,7 +63,7 @@ body {
   content: "";
   position: fixed;
   inset: 0;
-  z-index: -2;
+  z-index: 0;
   pointer-events: none;
   background:
     radial-gradient(60% 50% at 50% 38%, rgba(56, 99, 168, 0.16) 0%, transparent 70%),
@@ -76,7 +75,7 @@ body {
   content: "";
   position: fixed;
   inset: 0;
-  z-index: -1;
+  z-index: 0;
   pointer-events: none;
   opacity: 0.5;
   background-image:
@@ -95,6 +94,8 @@ body {
 
 /* ──────── Mirror Shell ──────── */
 .mirror-shell {
+  position: relative;
+  z-index: 1;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
