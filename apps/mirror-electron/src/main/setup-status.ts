@@ -237,3 +237,72 @@ export function getSetupStatus(): SetupStatus {
     secretsPathExists: existsSync(paths.secretsPath)
   });
 }
+
+/**
+ * Resolved LLM runtime configuration. The `apiKey` is for in-process provider
+ * calls ONLY — it is never returned over the API, logged, or serialized. The
+ * separate `apiKeyConfigured` boolean and `configSource` are the only
+ * key-related facts safe to expose.
+ */
+export interface LlmRuntimeConfig {
+  enabled: boolean;
+  provider: string;
+  baseUrl: string;
+  model: string;
+  /** Secret — in-process use only. Empty string when unset. */
+  apiKey: string;
+  apiKeyConfigured: boolean;
+  /** Source that supplied the config/secret; never a secret value. */
+  configSource: ConfigSource;
+}
+
+/**
+ * Build the resolved LLM runtime config from the local contract. Reads the
+ * non-secret llm block from config.json and the LLM_API_KEY secret via the
+ * documented precedence (process.env > secrets.env > .env.local). Throws
+ * {@link MalformedConfigError} on a malformed config.json.
+ */
+export function getLlmRuntimeConfig(): LlmRuntimeConfig {
+  const paths = getContractPaths();
+  const config = readConfigFile(paths.configPath);
+  const llm = config.providers.llm;
+
+  const fromSecrets = readEnvFile(paths.secretsPath);
+  const fromEnvLocal = readEnvFile(paths.envLocalPath);
+
+  const lookup = (key: string): { value: string; source: ConfigSource } => {
+    const sources: Array<{ map: Record<string, string>; name: SecretSource }> = [
+      { map: process.env as Record<string, string>, name: "process.env" },
+      { map: fromSecrets, name: "secrets.env" },
+      { map: fromEnvLocal, name: ".env.local" }
+    ];
+    for (const { map, name } of sources) {
+      const value = map[key];
+      if (typeof value === "string" && value.trim().length > 0) {
+        return { value: value.trim(), source: name };
+      }
+    }
+    return { value: "", source: "none" };
+  };
+
+  const apiKeyResolved = lookup("LLM_API_KEY");
+  const apiKeyConfigured = apiKeyResolved.value.length > 0;
+
+  // Prefer the API-key source when present; otherwise the config file is the
+  // source of the (secret-free) provider settings.
+  const configSource: ConfigSource = apiKeyConfigured
+    ? apiKeyResolved.source
+    : existsSync(paths.configPath)
+      ? "config.json"
+      : "none";
+
+  return {
+    enabled: Boolean(llm.enabled),
+    provider: typeof llm.provider === "string" ? llm.provider.trim() : "none",
+    baseUrl: typeof llm.baseUrl === "string" ? llm.baseUrl.trim() : "",
+    model: typeof llm.model === "string" ? llm.model.trim() : "",
+    apiKey: apiKeyResolved.value,
+    apiKeyConfigured,
+    configSource
+  };
+}

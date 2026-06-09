@@ -183,6 +183,41 @@ token are all present. Verify with `GET /modules/calendar` and
 
 ---
 
+## LLM (local Ollama or OpenAI-compatible)
+
+Optional local LLM backend. v0.1.0 supports two provider shapes: a local
+**Ollama** server, or any **OpenAI-compatible** `/chat/completions` endpoint.
+
+1. Choose a provider and model. For local Ollama, install and run Ollama and
+   pull a model; the default base URL is `http://127.0.0.1:11434`. For an
+   OpenAI-compatible endpoint, use its base URL and (if required) an API key.
+2. Configure via `pnpm setup`, or set the `llm` block in
+   `.local/aethos-mirror/config.json` and `LLM_API_KEY` in
+   `.local/aethos-mirror/secrets.env`:
+
+```json
+"llm": {
+  "enabled": true,
+  "provider": "ollama",
+  "baseUrl": "http://127.0.0.1:11434",
+  "model": "llama3"
+}
+```
+
+```dotenv
+# Only needed for openai-compatible providers; leave empty for local Ollama.
+LLM_API_KEY=
+```
+
+The API key is attached as `Authorization: Bearer <key>` only for the
+`openai-compatible` provider and only when non-empty. Local Ollama needs no key.
+
+Verify with `GET /llm/status` (the key is never returned) and test a turn with
+`POST /llm/chat`. Full detail:
+[../architecture/llm-integration.md](../architecture/llm-integration.md).
+
+---
+
 ## Map — OpenStreetMap (no key required)
 
 The map panel uses OpenStreetMap-style tiles and needs **no API key**. You only

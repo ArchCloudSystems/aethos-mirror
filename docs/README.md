@@ -14,6 +14,7 @@ personal-assistant magic mirror platform. Start here.
 
 | Document | What it covers |
 |----------|----------------|
+| [getting-started/setup-wizard.md](getting-started/setup-wizard.md) | `pnpm setup` — generate the local `config.json` + `secrets.env` (BYOK) |
 | [getting-started/local-development.md](getting-started/local-development.md) | Clone, install, type-check, build, run; Linux Electron sandbox/GPU notes; local API endpoints |
 | [getting-started/provider-setup.md](getting-started/provider-setup.md) | BYOK setup for Telegram, ElevenLabs, OpenWeather, NewsAPI, Google read-only Calendar/Gmail, and the no-key OpenStreetMap map |
 | [getting-started/raspberry-pi-roadmap.md](getting-started/raspberry-pi-roadmap.md) | The planned Raspberry Pi kiosk path (roadmap, not shipped) |
@@ -28,9 +29,11 @@ personal-assistant magic mirror platform. Start here.
 
 | Document | What it covers |
 |----------|----------------|
+| [architecture/configuration-model.md](architecture/configuration-model.md) | The public config contract: `config.json` schema, `secrets.env`, resolution precedence, distro isolation |
 | [architecture/public-private-split.md](architecture/public-private-split.md) | The public foundation vs the private downstream deployment, and the boundary rules |
 | [architecture/plugin-system.md](architecture/plugin-system.md) | Future plugin manifest, permissions model, provider/plugin boundary |
 | [architecture/librechat-bridge.md](architecture/librechat-bridge.md) | LibreChat as a conversation surface, ingress parity, shared memory concept |
+| [architecture/llm-integration.md](architecture/llm-integration.md) | BYOK LLM backend: Ollama + OpenAI-compatible providers, `/llm/status` and `/llm/chat` |
 | [architecture/installer-and-pi-image.md](architecture/installer-and-pi-image.md) | Install targets, terminal setup wizard, mobile-responsive requirement |
 | [architecture/aethos-mirror-public-roadmap.md](architecture/aethos-mirror-public-roadmap.md) | Detailed phased public roadmap and feature matrix |
 

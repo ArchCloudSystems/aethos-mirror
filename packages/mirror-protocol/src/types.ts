@@ -1,3 +1,5 @@
+import type { ConfigSource } from "./provider-registry";
+
 export type MirrorMode =
   | "landing"
   | "briefing"
@@ -310,3 +312,66 @@ export interface CommandResult {
   /** Safe, secret-free error description when the command failed. */
   error: string | null;
 }
+
+/**
+ * LLM provider choices supported by the v0.1.0 backend. `none` means no
+ * provider is selected. The two real providers are local Ollama and any
+ * OpenAI-compatible chat-completions endpoint.
+ */
+export type LlmProvider = "ollama" | "openai-compatible";
+
+/**
+ * Read-only LLM status returned by `GET /llm/status`. Carries only non-secret
+ * descriptors — never the API key. `missingFields` names the config fields
+ * (not values) still required before the provider counts as configured.
+ */
+export interface LlmStatus {
+  enabled: boolean;
+  /** Selected provider id, or "none" when unset/disabled. */
+  provider: LlmProvider | "none";
+  /** Whether a non-empty base URL is configured (URL itself omitted). */
+  baseUrlConfigured: boolean;
+  model: string;
+  configured: boolean;
+  /** Names of missing config fields, e.g. "provider", "baseUrl", "model". */
+  missingFields: string[];
+  /** Where the config/secret resolved from; never a secret value. */
+  configSource: ConfigSource;
+}
+
+/**
+ * Request body for `POST /llm/chat`. A single user message plus an optional
+ * system prompt. No secrets are accepted here.
+ */
+export interface LlmChatRequest {
+  message: string;
+  systemPrompt?: string;
+}
+
+/**
+ * Successful response from `POST /llm/chat`. Never includes the API key or the
+ * raw provider request. `durationMs` is the round-trip time to the provider.
+ */
+export interface LlmChatResponse {
+  ok: true;
+  provider: LlmProvider;
+  model: string;
+  reply: string;
+  /** ISO timestamp of when the request was received. */
+  receivedAt: string;
+  durationMs: number;
+}
+
+/**
+ * Error response from `POST /llm/chat`. Safe, secret-free description only.
+ * `errorCode` is a stable machine code such as "not_configured",
+ * "invalid_request", "provider_error", or "timeout".
+ */
+export interface LlmChatError {
+  ok: false;
+  error: string;
+  errorCode: string;
+}
+
+/** Union of the two `POST /llm/chat` result shapes. */
+export type LlmChatResult = LlmChatResponse | LlmChatError;

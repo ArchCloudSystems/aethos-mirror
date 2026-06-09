@@ -5,6 +5,7 @@ import { isMirrorCommand, runMirrorCommand } from "./modules/commands";
 import { synthesizeSpeech, getVoiceStatus } from "./modules/elevenlabs";
 import { getCalendarFeed, getEmailSummary } from "./modules/google";
 import { getNewsFeed } from "./modules/news";
+import { getLlmStatus, runLlmChat } from "./modules/llm";
 import { getTelegramStatus, sendTelegramMessage } from "./modules/telegram";
 import { getWeatherReading } from "./modules/weather";
 import { getSetupStatus, MalformedConfigError } from "./setup-status";
@@ -95,6 +96,24 @@ export function startApiServer(port: number): http.Server {
           }
           throw error;
         }
+        return;
+      }
+
+      if (method === "GET" && url.pathname === "/llm/status") {
+        // Read-only LLM status; never returns the API key.
+        sendJson(res, 200, {
+          ok: true,
+          llm: getLlmStatus()
+        });
+        return;
+      }
+
+      if (method === "POST" && url.pathname === "/llm/chat") {
+        // Runs an LLM chat turn. Never logs the prompt or returns the key.
+        // runLlmChat always resolves with a structured safe result.
+        const body = await readJsonBody(req);
+        const result = await runLlmChat(body);
+        sendJson(res, result.ok ? 200 : 400, result);
         return;
       }
 
