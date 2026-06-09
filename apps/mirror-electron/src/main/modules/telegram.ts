@@ -7,7 +7,7 @@ import TelegramBot from "node-telegram-bot-api";
 import { getTelegramProviderConfig } from "../config";
 
 /**
- * Telegram skeleton adapter for Ailee.
+ * Telegram skeleton adapter for Mirror.
  *
  * Configuration is read from the SAME loaded config source as
  * `/modules/status` (see {@link getTelegramProviderConfig}) so adapter
@@ -53,7 +53,7 @@ export function getTelegramStatus(): TelegramStatus {
   const hasChats = allowedChatIds.length > 0;
 
   const configured = hasToken && hasChats;
-  const enabled = configured && config.aileeEnabled;
+  const enabled = configured && config.assistantEnabled;
 
   return {
     configured,

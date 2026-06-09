@@ -8,7 +8,7 @@ export type MirrorMode =
   | "sleep"
   | "error";
 
-export type AssistantKey = "cailean" | "eilidh" | "none";
+export type AssistantKey = "assistant" | "none";
 
 export interface MirrorCommandReceipt {
   id: string;
@@ -36,7 +36,7 @@ export interface MirrorState {
 export type TelegramMode = "polling" | "webhook" | "disabled";
 
 /**
- * Read-only, secret-free status for each Ailee module. These shapes never
+ * Read-only, secret-free status for each Mirror module. These shapes never
  * carry raw API keys, tokens, or other credentials — only booleans and
  * non-sensitive identifiers (provider names, location label, mode).
  */
@@ -73,19 +73,19 @@ export interface MapModuleStatus {
   provider: string;
 }
 
-export interface AetherCoreBridgeModuleStatus {
+export interface AssistantBridgeModuleStatus {
   configured: boolean;
   enabled: boolean;
 }
 
-export interface AileeModulesStatus {
+export interface MirrorModulesStatus {
   telegram: TelegramModuleStatus;
   elevenLabs: ElevenLabsModuleStatus;
   google: GoogleModuleStatus;
   news: NewsModuleStatus;
   weather: WeatherModuleStatus;
   map: MapModuleStatus;
-  aetherCoreBridge: AetherCoreBridgeModuleStatus;
+  assistantBridge: AssistantBridgeModuleStatus;
 }
 
 /**
@@ -271,7 +271,7 @@ export interface VoiceTtsResult {
  * Deterministic local commands supported by `POST /modules/command`. These map
  * to the renderer command chips and the wake update flow. All are read-only.
  */
-export type AileeCommand =
+export type MirrorCommand =
   | "latest_news"
   | "weather"
   | "show_map"
@@ -281,7 +281,7 @@ export type AileeCommand =
 
 /**
  * A single titled section of a command result, suitable for compact display
- * in the Ailee status area.
+ * in the Mirror status area.
  */
 export interface CommandResultSection {
   label: string;
@@ -296,7 +296,7 @@ export interface CommandResultSection {
  */
 export interface CommandResult {
   ok: boolean;
-  command: AileeCommand;
+  command: MirrorCommand;
   /** Short headline summary suitable for a one-line status readout. */
   summary: string;
   /** Optional structured detail sections. */

@@ -1,8 +1,8 @@
 import { Component, useState, useEffect } from "react";
 import type { ErrorInfo, ReactNode } from "react";
 import type { MirrorMode, MirrorState } from "@aethos/mirror-protocol";
-import { AileeOrb, MirrorModules } from "./components/ModeComponents";
-import { useAileeModules } from "./hooks/useAileeModules";
+import { MirrorOrb, MirrorModules } from "./components/ModeComponents";
+import { useMirrorModules } from "./hooks/useMirrorModules";
 import "./global.css";
 
 // ─────────────────────────────────────────────────────────────────────────────────────────
@@ -52,7 +52,7 @@ export class MirrorErrorBoundary extends Component<
         <main className="mirror-shell error">
           <section className="mirror-card error-card">
             <header className="error-header">
-              <p className="eyebrow">Ailee Mirror</p>
+              <p className="eyebrow">Aethos Mirror</p>
               <h1>Something interrupted the mirror</h1>
             </header>
             <div className="error-content">
@@ -148,7 +148,7 @@ function useMirrorApi(port = DEFAULT_PORT) {
 // ─────────────────────────────────────────────────────────────────────────────────────────
 
 function LandingMode(): JSX.Element {
-  const modules = useAileeModules();
+  const modules = useMirrorModules();
 
   // Defensive fallbacks: never assume the hook returned a populated object.
   // Each field already falls back to null inside the hook, but guarding here
@@ -176,9 +176,9 @@ function LandingMode(): JSX.Element {
 
       <section className="mirror-stage__center">
         <p className="eyebrow">Magic mirror display</p>
-        <h1>Ailee Mirror</h1>
+        <h1>Aethos Mirror</h1>
 
-        <AileeOrb mode="landing" />
+        <MirrorOrb mode="landing" />
       </section>
     </main>
   );
@@ -307,7 +307,7 @@ function CockpitMode(): JSX.Element {
       <section className="mirror-card">
         <header className="cockpit-header">
           <div>
-            <p className="eyebrow">AetherCore Cockpit</p>
+            <p className="eyebrow">Assistant Cockpit</p>
             <h1>System Control</h1>
           </div>
           <div className="cockpit-status">
@@ -320,9 +320,9 @@ function CockpitMode(): JSX.Element {
           <div className="cockpit-panel">
             <h3>Assistants</h3>
             <div className="assistant-buttons">
-              <button className="assistant-btn active">Cailean</button>
-              <button className="assistant-btn">Eilidh</button>
-              <button className="assistant-btn">Ailee</button>
+              <button className="assistant-btn active">Assistant</button>
+              <button className="assistant-btn">Aethos</button>
+              <button className="assistant-btn">Operator</button>
             </div>
           </div>
 
@@ -373,7 +373,7 @@ function ToolPanelMode(): JSX.Element {
     <main className="mirror-shell tool-panel">
       <section className="mirror-card">
         <header className="tool-header">
-          <p className="eyebrow">AetherCore Developer Tools</p>
+          <p className="eyebrow">Developer Tools</p>
           <h1>Tool Panel</h1>
         </header>
 
@@ -468,7 +468,7 @@ function VoiceOnlyMode(): JSX.Element {
           </div>
           <div className="config-row">
             <span>Wake Word</span>
-            <strong>Cailean</strong>
+            <strong>Mirror</strong>
           </div>
           <div className="config-row">
             <span>Default Language</span>

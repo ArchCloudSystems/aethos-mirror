@@ -1,7 +1,7 @@
 import http from "node:http";
 import type { MirrorMode } from "@aethos/mirror-protocol";
-import { getAileeConfigStatus, getAileeModulesStatus } from "./config";
-import { isAileeCommand, runAileeCommand } from "./modules/commands";
+import { getMirrorConfigStatus, getMirrorModulesStatus } from "./config";
+import { isMirrorCommand, runMirrorCommand } from "./modules/commands";
 import { synthesizeSpeech, getVoiceStatus } from "./modules/elevenlabs";
 import { getCalendarFeed, getEmailSummary } from "./modules/google";
 import { getNewsFeed } from "./modules/news";
@@ -78,7 +78,7 @@ export function startApiServer(port: number): http.Server {
         // Sanitized status only — never exposes raw keys or tokens.
         sendJson(res, 200, {
           ok: true,
-          config: getAileeConfigStatus()
+          config: getMirrorConfigStatus()
         });
         return;
       }
@@ -87,7 +87,7 @@ export function startApiServer(port: number): http.Server {
         // Read-only, secret-free module status map. No raw keys/tokens.
         sendJson(res, 200, {
           ok: true,
-          modules: getAileeModulesStatus()
+          modules: getMirrorModulesStatus()
         });
         return;
       }
@@ -182,7 +182,7 @@ export function startApiServer(port: number): http.Server {
             ? (body as { command: unknown }).command
             : undefined;
 
-        if (!isAileeCommand(command)) {
+        if (!isMirrorCommand(command)) {
           sendJson(res, 400, {
             ok: false,
             error: "Invalid or missing command"
@@ -190,7 +190,7 @@ export function startApiServer(port: number): http.Server {
           return;
         }
 
-        const result = await runAileeCommand(command);
+        const result = await runMirrorCommand(command);
         sendJson(res, result.ok ? 200 : 400, result);
         return;
       }

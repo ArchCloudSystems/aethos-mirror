@@ -1,18 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type {
-  AileeModulesStatus,
+  MirrorModulesStatus,
   CalendarFeed,
   EmailSummary,
   NewsFeed,
   WeatherReading
 } from "@aethos/mirror-protocol";
 import type {
-  AileeCommand,
+  MirrorCommand,
   CommandResult
 } from "@aethos/mirror-protocol/dist/types";
 
 /**
- * useAileeModules — renderer hook that consumes the LOCAL Ailee module API
+ * useMirrorModules — renderer hook that consumes the LOCAL Mirror module API
  * server only (http://127.0.0.1:<port>). It performs no external browser/API
  * calls; every request targets the local main-process API. Each module is
  * fetched independently so a single failing endpoint never blocks the others,
@@ -22,8 +22,8 @@ import type {
 const DEFAULT_PORT = 3055;
 const POLL_INTERVAL_MS = 60000;
 
-export interface AileeModulesData {
-  status: AileeModulesStatus | null;
+export interface MirrorModulesData {
+  status: MirrorModulesStatus | null;
   weather: WeatherReading | null;
   news: NewsFeed | null;
   calendar: CalendarFeed | null;
@@ -35,7 +35,7 @@ export interface AileeModulesData {
   /** True while a command request is in flight. */
   commandPending: boolean;
   /** Fire a deterministic local command against POST /modules/command. */
-  sendCommand: (command: AileeCommand) => Promise<void>;
+  sendCommand: (command: MirrorCommand) => Promise<void>;
 }
 
 async function fetchJson<T>(
@@ -61,10 +61,10 @@ function asObject(body: unknown): Record<string, unknown> | null {
     : null;
 }
 
-export function useAileeModules(port = DEFAULT_PORT): AileeModulesData {
+export function useMirrorModules(port = DEFAULT_PORT): MirrorModulesData {
   const baseUrl = `http://127.0.0.1:${port}`;
   const [modules, setModules] = useState<{
-    status: AileeModulesStatus | null;
+    status: MirrorModulesStatus | null;
     weather: WeatherReading | null;
     news: NewsFeed | null;
     calendar: CalendarFeed | null;
@@ -90,10 +90,10 @@ export function useAileeModules(port = DEFAULT_PORT): AileeModulesData {
     async function refresh(): Promise<void> {
       const [status, weather, news, calendar, emailSummary] =
         await Promise.all([
-          fetchJson<AileeModulesStatus>(`${baseUrl}/modules/status`, (body) => {
+          fetchJson<MirrorModulesStatus>(`${baseUrl}/modules/status`, (body) => {
             const obj = asObject(body);
             return obj && obj.ok === true
-              ? (obj.modules as AileeModulesStatus) ?? null
+              ? (obj.modules as MirrorModulesStatus) ?? null
               : null;
           }),
           fetchJson<WeatherReading>(`${baseUrl}/modules/weather`, (body) => {
@@ -151,7 +151,7 @@ export function useAileeModules(port = DEFAULT_PORT): AileeModulesData {
   }, [baseUrl]);
 
   const sendCommand = useCallback(
-    async (command: AileeCommand): Promise<void> => {
+    async (command: MirrorCommand): Promise<void> => {
       setCommandPending(true);
       try {
         const res = await fetch(`${baseUrl}/modules/command`, {

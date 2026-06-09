@@ -1,6 +1,6 @@
 export type {
-  AetherCoreBridgeModuleStatus,
-  AileeModulesStatus,
+  AssistantBridgeModuleStatus,
+  MirrorModulesStatus,
   AssistantKey,
   CalendarEvent,
   CalendarFeed,

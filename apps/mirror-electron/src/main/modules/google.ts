@@ -11,7 +11,7 @@ import { getGoogleProviderConfig } from "../config";
 type OAuth2Client = InstanceType<typeof google.auth.OAuth2>;
 
 /**
- * Read-only Google Calendar + Gmail summary adapter for Ailee.
+ * Read-only Google Calendar + Gmail summary adapter for Mirror.
  *
  * Configuration is read from the SAME loaded config source as
  * `/modules/status` (see {@link getGoogleProviderConfig}) so adapter behavior

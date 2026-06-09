@@ -58,7 +58,7 @@ never clobbers a real one.
 | `GOOGLE_CLIENT_ID` | Sensitive — OAuth client identity |
 | `GOOGLE_CLIENT_SECRET` | **Secret** — OAuth client secret |
 | `GOOGLE_REFRESH_TOKEN` | **Secret** — long-lived account access (read-only scopes) |
-| `AETHERCORE_BRIDGE_TOKEN` | **Secret** — only relevant to private downstream deployments |
+| `ASSISTANT_BRIDGE_TOKEN` | **Secret** — only relevant to the optional assistant bridge |
 | `TELEGRAM_ALLOWED_CHAT_IDS` | Not secret, but private (your chat IDs) |
 | `MAP_TILE_URL`, `MAP_ATTRIBUTION` | Not secret (OpenStreetMap needs no key) |
 

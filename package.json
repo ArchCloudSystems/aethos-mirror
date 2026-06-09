@@ -2,7 +2,7 @@
   "name": "aethos-mirror",
   "version": "0.1.0",
   "private": true,
-  "description": "Standalone Electron kiosk/browser appliance for the AetherCore/Aethos ecosystem",
+  "description": "Aethos Mirror — open-source, BYOK personal-assistant magic mirror platform for Debian desktops, kiosk displays, and Raspberry Pi-style mirror appliances",
   "type": "module",
   "packageManager": "pnpm@10.0.0",
   "scripts": {
@@ -13,7 +13,8 @@
   },
   "keywords": [
     "aethos",
-    "aethercore",
+    "aethos-mirror",
+    "byok",
     "electron",
     "kiosk",
     "magic-mirror",
