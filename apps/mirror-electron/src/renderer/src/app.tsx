@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import type { MirrorMode, MirrorState } from "@aethos/mirror-protocol";
 import { AileeOrb, MirrorModules } from "./components/ModeComponents";
+import { useAileeModules } from "./hooks/useAileeModules";
 import "./global.css";
 
 // ─────────────────────────────────────────────────────────────────────────────────────────
@@ -68,9 +69,23 @@ function useMirrorApi(port = DEFAULT_PORT) {
 // ─────────────────────────────────────────────────────────────────────────────────────────
 
 function LandingMode(): JSX.Element {
+  const modules = useAileeModules();
+
   return (
     <main className="mirror-shell mirror-stage">
-      <MirrorModules />
+      <MirrorModules
+        data={{
+          weather: modules.weather,
+          news: modules.news,
+          calendar: modules.calendar,
+          emailSummary: modules.emailSummary,
+        }}
+        lastCommand={modules.lastCommand}
+        commandPending={modules.commandPending}
+        onCommand={(command) => {
+          void modules.sendCommand(command);
+        }}
+      />
 
       <section className="mirror-stage__center">
         <p className="eyebrow">Magic mirror display</p>

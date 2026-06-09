@@ -1045,6 +1045,31 @@
   box-shadow: 0 0 12px rgba(96, 165, 250, 0.5);
 }
 
+/* Live OpenStreetMap/Leaflet panel — small and quiet */
+.ailee-map {
+  width: 160px;
+  height: 90px;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  overflow: hidden;
+}
+
+.ailee-map__canvas {
+  width: 100%;
+  height: 100%;
+  /* Subdue the bright default OSM tiles so the panel stays calm. */
+  filter: grayscale(0.4) brightness(0.65) contrast(0.95);
+  background: rgba(15, 23, 42, 0.4);
+}
+
+.ailee-map__pin-icon {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(96, 165, 250, 0.8);
+  box-shadow: 0 0 12px rgba(96, 165, 250, 0.55);
+}
+
 /* Command hints */
 .module-hints {
   display: flex;
@@ -1063,10 +1088,123 @@
   background: rgba(15, 23, 42, 0.3);
 }
 
+/* Interactive command chips (local command path) */
+.module-hint--button {
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.module-hint--button:hover:not(:disabled) {
+  color: var(--color-text-primary);
+  border-color: rgba(96, 165, 250, 0.4);
+  background: rgba(30, 41, 59, 0.5);
+}
+
+.module-hint--button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Ailee status area — most recent command result */
+.module-ailee-status {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 420px;
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.35);
+}
+
+.module-ailee-status__summary {
+  font-size: 1.05rem;
+  line-height: 1.4;
+  color: var(--color-text-primary);
+}
+
+.module-ailee-status__summary.is-error {
+  color: rgba(248, 180, 180, 0.9);
+}
+
+.module-ailee-status__sections {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.module-ailee-status__section {
+  display: flex;
+  gap: 0.6rem;
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
+.module-ailee-status__label {
+  flex: 0 0 auto;
+  min-width: 72px;
+  color: rgba(148, 163, 184, 0.7);
+  letter-spacing: 0.02em;
+}
+
+.module-ailee-status__line {
+  color: var(--color-text-primary);
+}
+
+/* ─────── Responsive MagicMirror layout ───────
+   Targets: Raspberry Pi kiosk / wall display, desktop fullscreen,
+   small monitors, and a minimal mobile orb view. Goals: keep the orb
+   centered, keep typography readable, never scroll horizontally, and
+   avoid overcrowding by shedding lower-priority modules as width drops. */
+
+/* ── Medium screens / small monitors: keep everything, just tighten ── */
+@media (max-width: 1100px) {
+  .mirror-stage__center h1 {
+    font-size: 1.75rem;
+  }
+
+  .module-time__clock {
+    font-size: 2.6rem;
+  }
+
+  .module-weather__temp {
+    font-size: 1.6rem;
+  }
+
+  .module-weather__glyph {
+    font-size: 2.1rem;
+  }
+
+  .mirror-module--bottom-left {
+    max-width: 34vw;
+  }
+
+  .mirror-module--bottom-right {
+    max-width: 32vw;
+  }
+
+  .module-map__canvas {
+    width: 140px;
+    height: 78px;
+  }
+}
+
 /* Compact placements on smaller screens */
 @media (max-width: 900px) {
+  .mirror-stage__center h1 {
+    font-size: 1.55rem;
+  }
+
   .module-time__clock {
     font-size: 2.2rem;
+  }
+
+  .module-time__date {
+    font-size: 0.9rem;
   }
 
   .mirror-module--bottom-left,
@@ -1074,7 +1212,166 @@
     max-width: 40vw;
   }
 
+  .module-headlines__row {
+    font-size: 0.9rem;
+  }
+
+  .module-preview__line {
+    font-size: 0.85rem;
+  }
+
   .module-hints {
     gap: 0.75rem;
+  }
+
+  .module-hint {
+    font-size: 0.8rem;
+    padding: 0.35rem 0.75rem;
+  }
+}
+
+/* ── Narrow / mobile: minimal orb view ──
+   Prioritize the orb, its status, time/date, weather, and command hints.
+   Drop the denser headline list and calendar/email/map stack so the orb
+   stays the focus and nothing collides or overflows. */
+@media (max-width: 600px) {
+  .mirror-module--bottom-left,
+  .mirror-module--bottom-right {
+    display: none;
+  }
+
+  .mirror-module--top-left {
+    top: 2vh;
+    left: 4vw;
+  }
+
+  .mirror-module--top-right {
+    top: 2vh;
+    right: 4vw;
+  }
+
+  .module-time__clock {
+    font-size: 1.9rem;
+  }
+
+  .module-time__date {
+    font-size: 0.8rem;
+    max-width: 42vw;
+  }
+
+  .module-weather {
+    gap: 0.6rem;
+  }
+
+  .module-weather__glyph {
+    font-size: 1.8rem;
+  }
+
+  .module-weather__temp {
+    font-size: 1.4rem;
+  }
+
+  .module-weather__label {
+    font-size: 0.75rem;
+  }
+
+  .mirror-stage__center h1 {
+    font-size: 1.4rem;
+  }
+
+  .ailee-orb {
+    margin: 1.5rem auto;
+  }
+
+  .ailee-orb__sphere {
+    width: 170px;
+    height: 170px;
+  }
+
+  .ailee-orb__halo {
+    width: 230px;
+    height: 230px;
+  }
+
+  .ailee-orb__core {
+    width: 64px;
+    height: 64px;
+  }
+
+  .ailee-orb__name {
+    font-size: 1.25rem;
+  }
+
+  .ailee-orb__status {
+    font-size: 0.85rem;
+  }
+
+  .mirror-module--bottom-center {
+    bottom: 2.5vh;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: 92vw;
+  }
+
+  .module-hints {
+    gap: 0.5rem;
+  }
+
+  .module-hint {
+    font-size: 0.75rem;
+    padding: 0.3rem 0.7rem;
+  }
+}
+
+/* ── Very small handsets: trim hints further, keep core legible ── */
+@media (max-width: 380px) {
+  .ailee-orb__sphere {
+    width: 140px;
+    height: 140px;
+  }
+
+  .ailee-orb__halo {
+    width: 190px;
+    height: 190px;
+  }
+
+  .ailee-orb__core {
+    width: 52px;
+    height: 52px;
+  }
+
+  .module-time__clock {
+    font-size: 1.7rem;
+  }
+
+  .module-hint {
+    font-size: 0.7rem;
+    padding: 0.28rem 0.6rem;
+  }
+}
+
+/* ── Short / landscape kiosk panels: keep the orb from crowding edges ── */
+@media (max-height: 520px) {
+  .ailee-orb {
+    margin: 1rem auto;
+  }
+
+  .ailee-orb__sphere {
+    width: 150px;
+    height: 150px;
+  }
+
+  .ailee-orb__halo {
+    width: 200px;
+    height: 200px;
+  }
+
+  .ailee-orb__caption {
+    margin-top: 1rem;
+  }
+
+  .mirror-module--bottom-center {
+    bottom: 2vh;
   }
 }

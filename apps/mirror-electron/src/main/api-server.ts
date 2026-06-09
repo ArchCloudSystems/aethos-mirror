@@ -1,6 +1,12 @@
 import http from "node:http";
 import type { MirrorMode } from "@aethos/mirror-protocol";
 import { getAileeConfigStatus, getAileeModulesStatus } from "./config";
+import { isAileeCommand, runAileeCommand } from "./modules/commands";
+import { synthesizeSpeech, getVoiceStatus } from "./modules/elevenlabs";
+import { getCalendarFeed, getEmailSummary } from "./modules/google";
+import { getNewsFeed } from "./modules/news";
+import { getTelegramStatus, sendTelegramMessage } from "./modules/telegram";
+import { getWeatherReading } from "./modules/weather";
 import { getMirrorState, setMirrorMode } from "./state";
 
 const VALID_MODES = new Set<MirrorMode>([
@@ -83,6 +89,109 @@ export function startApiServer(port: number): http.Server {
           ok: true,
           modules: getAileeModulesStatus()
         });
+        return;
+      }
+
+      if (method === "GET" && url.pathname === "/modules/weather") {
+        // Read-only weather; never throws, never returns secrets.
+        const weather = await getWeatherReading();
+        sendJson(res, 200, {
+          ok: true,
+          weather
+        });
+        return;
+      }
+
+      if (method === "GET" && url.pathname === "/modules/news") {
+        // Read-only news; never throws, never returns secrets.
+        const news = await getNewsFeed();
+        sendJson(res, 200, {
+          ok: true,
+          news
+        });
+        return;
+      }
+
+      if (method === "GET" && url.pathname === "/modules/calendar") {
+        // Read-only calendar; never throws, never returns tokens.
+        const calendar = await getCalendarFeed();
+        sendJson(res, 200, {
+          ok: true,
+          calendar
+        });
+        return;
+      }
+
+      if (method === "GET" && url.pathname === "/modules/email-summary") {
+        // Read-only unread summary; never throws, never returns tokens.
+        const emailSummary = await getEmailSummary();
+        sendJson(res, 200, {
+          ok: true,
+          emailSummary
+        });
+        return;
+      }
+
+      if (method === "GET" && url.pathname === "/modules/telegram/status") {
+        // Read-only; never returns the bot token.
+        sendJson(res, 200, {
+          ok: true,
+          telegram: getTelegramStatus()
+        });
+        return;
+      }
+
+      if (
+        method === "POST" &&
+        url.pathname === "/modules/telegram/send-message"
+      ) {
+        const body = await readJsonBody(req);
+        const text =
+          body && typeof body === "object" && "text" in body
+            ? (body as { text: unknown }).text
+            : undefined;
+        const result = await sendTelegramMessage(text);
+        sendJson(res, result.ok ? 200 : 400, result);
+        return;
+      }
+
+      if (method === "GET" && url.pathname === "/modules/voice/status") {
+        // Read-only; never returns the API key.
+        sendJson(res, 200, {
+          ok: true,
+          voice: getVoiceStatus()
+        });
+        return;
+      }
+
+      if (method === "POST" && url.pathname === "/modules/voice/tts") {
+        const body = await readJsonBody(req);
+        const text =
+          body && typeof body === "object" && "text" in body
+            ? (body as { text: unknown }).text
+            : undefined;
+        const result = await synthesizeSpeech(text);
+        sendJson(res, result.ok ? 200 : 400, result);
+        return;
+      }
+
+      if (method === "POST" && url.pathname === "/modules/command") {
+        const body = await readJsonBody(req);
+        const command =
+          body && typeof body === "object" && "command" in body
+            ? (body as { command: unknown }).command
+            : undefined;
+
+        if (!isAileeCommand(command)) {
+          sendJson(res, 400, {
+            ok: false,
+            error: "Invalid or missing command"
+          });
+          return;
+        }
+
+        const result = await runAileeCommand(command);
+        sendJson(res, result.ok ? 200 : 400, result);
         return;
       }
 

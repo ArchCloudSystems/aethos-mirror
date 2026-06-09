@@ -1,3 +1,14 @@
+import type {
+  CalendarFeed,
+  EmailSummary,
+  NewsFeed,
+  WeatherReading
+} from "@aethos/mirror-protocol";
+import type {
+  AileeCommand,
+  CommandResult
+} from "@aethos/mirror-protocol/dist/types";
+import { AileeMapPanel } from "./AileeMapPanel";
 import "./ModeComponents.css";
 
 // ─────────────────────────────────────────────────────────────────────────────────────────
@@ -56,17 +67,26 @@ export function AileeOrb({ mode }: AileeOrbProps): JSX.Element {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────────────────
-// Mirror Modules — MagicMirror-style placeholder widgets around the Ailee orb
+// Mirror Modules — MagicMirror-style widgets around the Ailee orb
 // ─────────────────────────────────────────────────────────────────────────────────────────
 
-// These are calm, distance-readable placeholders only. No real data providers,
-// no external APIs — every value below is static placeholder content.
+// Widgets render live data from the LOCAL Ailee module API when available, and
+// fall back to calm, distance-readable placeholders when a module is not
+// configured or its endpoint is unreachable. The map remains a static
+// OpenStreetMap-style visual for now.
 
-const COMMAND_HINTS = [
-  "Ailee, latest news",
-  "Ailee, weather",
-  "Ailee, show map",
-  "Ailee, open YouTube",
+interface CommandChip {
+  command: AileeCommand;
+  label: string;
+}
+
+const COMMAND_CHIPS: CommandChip[] = [
+  { command: "latest_news", label: "Ailee, latest news" },
+  { command: "weather", label: "Ailee, weather" },
+  { command: "show_map", label: "Ailee, show map" },
+  { command: "open_youtube", label: "Ailee, open YouTube" },
+  { command: "check_email", label: "Ailee, check email" },
+  { command: "wake_update", label: "Ailee, update me" },
 ];
 
 const HEADLINE_PLACEHOLDERS = [
@@ -75,7 +95,90 @@ const HEADLINE_PLACEHOLDERS = [
   "Headline three — standing by for the latest news",
 ];
 
-export function MirrorModules(): JSX.Element {
+export interface MirrorModulesData {
+  weather?: WeatherReading | null;
+  news?: NewsFeed | null;
+  calendar?: CalendarFeed | null;
+  emailSummary?: EmailSummary | null;
+}
+
+interface MirrorModulesProps {
+  data?: MirrorModulesData;
+  /** Most recent command result, shown in the Ailee status area. */
+  lastCommand?: CommandResult | null;
+  /** True while a command request is in flight. */
+  commandPending?: boolean;
+  /** Invoked when a command chip is activated. */
+  onCommand?: (command: AileeCommand) => void;
+}
+
+function formatTemperature(weather: WeatherReading | null | undefined): string {
+  if (
+    !weather ||
+    weather.source !== "live" ||
+    weather.temperature === null ||
+    !Number.isFinite(weather.temperature)
+  ) {
+    return "--°";
+  }
+  return `${Math.round(weather.temperature)}°`;
+}
+
+function formatWeatherLabel(weather: WeatherReading | null | undefined): string {
+  if (!weather || weather.source !== "live") {
+    return "Weather standing by";
+  }
+  const description = weather.description?.trim();
+  return description && description.length > 0
+    ? description
+    : "Weather standing by";
+}
+
+function formatEventTime(start: string | null, allDay: boolean): string {
+  if (!start) {
+    return "";
+  }
+  if (allDay) {
+    return "All day";
+  }
+  const date = new Date(start);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+  return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+}
+
+export function MirrorModules({
+  data,
+  lastCommand,
+  commandPending,
+  onCommand
+}: MirrorModulesProps): JSX.Element {
+  const weather = data?.weather ?? null;
+  const news = data?.news ?? null;
+  const calendar = data?.calendar ?? null;
+  const emailSummary = data?.emailSummary ?? null;
+
+  const hasLiveHeadlines =
+    news?.source === "live" && news.headlines.length > 0;
+  const headlineRows = hasLiveHeadlines
+    ? news!.headlines.slice(0, 3).map((headline) => headline.title)
+    : HEADLINE_PLACEHOLDERS;
+
+  const hasLiveCalendar =
+    calendar?.source === "live" && calendar.events.length > 0;
+  const nextEvent = hasLiveCalendar ? calendar!.events[0] : null;
+  const calendarLine = nextEvent
+    ? [nextEvent.title, formatEventTime(nextEvent.start, nextEvent.allDay)]
+        .filter((part) => part && part.length > 0)
+        .join(" • ")
+    : "Calendar preview standing by";
+
+  const hasLiveEmail = emailSummary?.source === "live";
+  const emailLine = hasLiveEmail
+    ? `${emailSummary!.unreadCount} unread`
+    : "Email update standing by";
+
   return (
     <div className="mirror-modules" aria-label="Mirror modules">
       {/* Top-left: time / date */}
@@ -84,20 +187,20 @@ export function MirrorModules(): JSX.Element {
         <span className="module-time__date">Monday, June 8, 2026</span>
       </div>
 
-      {/* Top-right: weather placeholder */}
+      {/* Top-right: weather (live when configured) */}
       <div className="mirror-module mirror-module--top-right module-weather">
         <span className="module-weather__glyph" aria-hidden="true">◐</span>
         <div className="module-weather__readout">
-          <span className="module-weather__temp">--°</span>
-          <span className="module-weather__label">Weather standing by</span>
+          <span className="module-weather__temp">{formatTemperature(weather)}</span>
+          <span className="module-weather__label">{formatWeatherLabel(weather)}</span>
         </div>
       </div>
 
-      {/* Lower-left: 3 headline rows */}
+      {/* Lower-left: headline rows (live when configured) */}
       <div className="mirror-module mirror-module--bottom-left module-headlines">
         <span className="module-heading">Headlines</span>
         <ul className="module-headlines__list">
-          {HEADLINE_PLACEHOLDERS.map((line, index) => (
+          {headlineRows.map((line, index) => (
             <li key={index} className="module-headlines__row">
               {line}
             </li>
@@ -109,28 +212,77 @@ export function MirrorModules(): JSX.Element {
       <div className="mirror-module mirror-module--bottom-right module-stack">
         <div className="module-preview module-calendar">
           <span className="module-heading">Calendar</span>
-          <span className="module-preview__line">Calendar preview standing by</span>
+          <span className="module-preview__line">{calendarLine}</span>
         </div>
 
         <div className="module-preview module-email">
           <span className="module-heading">Email</span>
-          <span className="module-preview__line">Email update standing by</span>
+          <span className="module-preview__line">{emailLine}</span>
         </div>
 
         <div className="module-preview module-map">
           <span className="module-heading">Map</span>
-          <div className="module-map__canvas" aria-hidden="true">
-            <span className="module-map__pin"></span>
-          </div>
+          <AileeMapPanel
+            latitude={weather?.latitude ?? null}
+            longitude={weather?.longitude ?? null}
+          />
         </div>
       </div>
 
-      {/* Bottom: command hints */}
-      <div className="mirror-module mirror-module--bottom-center module-hints">
-        {COMMAND_HINTS.map((hint) => (
-          <span key={hint} className="module-hint">
-            {hint}
+      {/* Ailee status area — shows the most recent command result */}
+      <div
+        className="mirror-module mirror-module--status module-ailee-status"
+        aria-live="polite"
+      >
+        <span className="module-heading">Ailee</span>
+        {commandPending ? (
+          <span className="module-ailee-status__summary">Working…</span>
+        ) : lastCommand ? (
+          <>
+            <span
+              className={`module-ailee-status__summary${
+                lastCommand.ok ? "" : " is-error"
+              }`}
+            >
+              {lastCommand.summary}
+            </span>
+            {lastCommand.sections.length > 0 && (
+              <ul className="module-ailee-status__sections">
+                {lastCommand.sections.slice(0, 5).map((section) => (
+                  <li
+                    key={section.label}
+                    className="module-ailee-status__section"
+                  >
+                    <span className="module-ailee-status__label">
+                      {section.label}
+                    </span>
+                    <span className="module-ailee-status__line">
+                      {section.lines[0] ?? ""}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
+        ) : (
+          <span className="module-ailee-status__summary">
+            Standing by — try a command below
           </span>
+        )}
+      </div>
+
+      {/* Bottom: command chips (local command path) */}
+      <div className="mirror-module mirror-module--bottom-center module-hints">
+        {COMMAND_CHIPS.map((chip) => (
+          <button
+            key={chip.command}
+            type="button"
+            className="module-hint module-hint--button"
+            disabled={commandPending}
+            onClick={() => onCommand?.(chip.command)}
+          >
+            {chip.label}
+          </button>
         ))}
       </div>
     </div>
