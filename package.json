@@ -7,6 +7,7 @@
   "packageManager": "pnpm@10.0.0",
   "scripts": {
     "setup": "node scripts/setup/aethos-setup.mjs",
+    "providers:check": "node scripts/setup/check-providers.mjs",
     "dev": "pnpm --filter @aethos/mirror-electron dev",
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",

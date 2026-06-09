@@ -74,6 +74,18 @@ automated checks.
 
 ## After setup
 
+- Verify what's configured at any time — without revealing secrets — with the
+  provider check CLI:
+
+  ```bash
+  pnpm providers:check
+  ```
+
+  It prints one secret-free line per provider
+  (`configured` / `missing …` / `disabled`), exits 0 when providers are merely
+  missing keys or disabled, and exits nonzero only when a contract file is
+  malformed. When the mirror is running, the same data is served at
+  `GET /setup/status`.
 - The generated `config.json` is consumed by the runtime, provider checks, the
   LLM integration, the LibreChat bridge, and distro isolation. See
   [../architecture/configuration-model.md](../architecture/configuration-model.md).

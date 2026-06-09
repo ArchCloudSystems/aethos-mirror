@@ -7,6 +7,7 @@ import { getCalendarFeed, getEmailSummary } from "./modules/google";
 import { getNewsFeed } from "./modules/news";
 import { getTelegramStatus, sendTelegramMessage } from "./modules/telegram";
 import { getWeatherReading } from "./modules/weather";
+import { getSetupStatus, MalformedConfigError } from "./setup-status";
 import { getMirrorState, setMirrorMode } from "./state";
 
 const VALID_MODES = new Set<MirrorMode>([
@@ -71,6 +72,29 @@ export function startApiServer(port: number): http.Server {
 
       if (method === "GET" && url.pathname === "/state") {
         sendJson(res, 200, getMirrorState());
+        return;
+      }
+
+      if (method === "GET" && url.pathname === "/setup/status") {
+        // Secret-free setup + provider readiness derived from the shared
+        // registry. Returns the SAME contract the `providers:check` CLI uses.
+        // A malformed config.json/secrets.env surfaces as a 500 so the caller
+        // knows the files are broken (never returns secret values).
+        try {
+          sendJson(res, 200, {
+            ok: true,
+            setup: getSetupStatus()
+          });
+        } catch (error) {
+          if (error instanceof MalformedConfigError) {
+            sendJson(res, 500, {
+              ok: false,
+              error: error.message
+            });
+            return;
+          }
+          throw error;
+        }
         return;
       }
 

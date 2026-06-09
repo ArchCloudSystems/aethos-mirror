@@ -202,12 +202,44 @@ the correct attribution.
 
 ## Verifying your setup
 
-Once the mirror is running (`pnpm dev`), check the secret-free status map:
+The fastest check is the provider CLI — no running app required:
 
 ```bash
+pnpm providers:check
+```
+
+It reads the local config contract (`config.json` + `secrets.env`, with
+`.env.local` as a fallback) and prints a secret-free line per provider:
+
+```
+Aethos Mirror provider check
+Assistant: Aethos
+Weather: configured / missing key / disabled
+News: configured / missing key / disabled
+Telegram: configured / missing token / disabled
+Voice: configured / missing key / disabled
+Google: configured / missing OAuth fields / disabled
+LLM: configured / missing model/base URL/API key / disabled
+LibreChat: configured / missing base URL/API key / disabled
+Assistant Bridge: configured / missing URL or token / disabled
+```
+
+The CLI **exits 0** when providers are merely missing keys or disabled (the
+normal BYOK state); it exits nonzero **only** when a contract file is malformed
+(invalid `config.json` or unreadable `secrets.env`). No keys or tokens are ever
+printed.
+
+Once the mirror is running (`pnpm dev`), the same readiness data is available
+over the local API:
+
+```bash
+curl -s http://127.0.0.1:3055/setup/status
 curl -s http://127.0.0.1:3055/modules/status
 ```
 
-Each module reports `configured` / `enabled` flags and non-sensitive
-descriptors only. No keys or tokens are ever included. For the full endpoint
-list, see [local-development.md](local-development.md).
+`GET /setup/status` returns `setupComplete`, `assistantName`, `configSource`,
+`configPathExists`, `secretsPathExists`, a `providers` readiness array, and the
+`nextCommands` to run — all secret-free, derived from the same shared provider
+registry the CLI uses. Each module also reports `configured` / `enabled` flags
+and non-sensitive descriptors only. For the full endpoint list, see
+[local-development.md](local-development.md).
