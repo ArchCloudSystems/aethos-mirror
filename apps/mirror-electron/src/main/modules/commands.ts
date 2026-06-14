@@ -2,7 +2,7 @@ import type {
   MirrorCommand,
   CommandResult,
   CommandResultSection
-} from "@aethos/mirror-protocol/dist/types";
+} from "@aethos/mirror-protocol";
 import { getMirrorModulesStatus } from "../config";
 import { getVoiceStatus } from "./elevenlabs";
 import { getCalendarFeed } from "./google";

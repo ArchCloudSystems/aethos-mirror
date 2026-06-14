@@ -5,10 +5,14 @@ desktops, kiosk displays, and Raspberry Pi-style mirror appliances.**
 
 Aethos Mirror turns a screen — a wall-mounted display, a desktop, or a Pi
 behind two-way glass — into a cinematic, glanceable assistant surface. It
-renders ambient information (weather, news, calendar, mail summaries, maps),
-hosts a real browser cockpit, and gives you a customizable assistant identity
-driven entirely by **your own provider keys**. No bundled secrets, no cloud
-account requirement, no vendor lock-in.
+renders ambient information (weather, news, calendar, mail summaries, maps)
+and gives you a customizable assistant identity driven entirely by **your own
+provider keys**. No bundled secrets, no cloud account requirement, no vendor
+lock-in.
+
+> A real embedded browser cockpit and live voice (microphone / wake word) are
+> on the roadmap but are **not implemented yet** — see
+> [Known blockers](#known-blockers).
 
 ---
 
@@ -30,6 +34,35 @@ descriptions, not CI-backed shields):
 > wizard, apt repo, Raspberry Pi image, LibreChat bridge, shared memory DB)
 > are **planned and designed but not yet shipped.** Sections below mark clearly
 > what exists today versus what is on the roadmap.
+
+---
+
+## Known blockers
+
+These are implemented as **placeholders only** in the current foundation. The
+UI for each mode renders, but the underlying capability is not wired up. They
+are called out here so the product stays truthful about what works today:
+
+- **Browser mode — NOT implemented.** The `browser` mode shows a "Browser not
+  implemented" placeholder. The Electron main process only creates a
+  `BrowserWindow` for the renderer; it does **not** yet create a `BrowserView` /
+  `WebContentsView`, so there is no real embedded Chromium surface. The
+  `BrowserState` protocol type exists as the contract for the future
+  implementation.
+- **Voice — text-to-speech only; no microphone, no wake word.** Outbound speech
+  synthesis (ElevenLabs, BYOK) is wired and writes to a local temp file. There
+  is **no live microphone capture and no wake-word detection.** The `voice_only`
+  mode and the `VoiceState` protocol type reflect this honestly (`listening`
+  and `wakeWordActive` are always `false`).
+- **Briefing / cockpit / tool-panel modes — placeholder data.** These modes
+  render static placeholder content and are not connected to live providers or
+  device controls. Each is labelled "Placeholder" in the UI.
+- **Sleep mode — no scheduled wake.** The wake schedule shown is a placeholder;
+  scheduled wake is not implemented.
+
+The live, real-data path today is the **landing mode**, which consumes the
+local module API (weather, news, calendar, mail summary) via the configured
+BYOK providers, plus the **Integrations / Setup panel**.
 
 ---
 
@@ -69,7 +102,7 @@ assistant platform. It combines:
 - a **local module API** (HTTP, localhost-bound) you can script and extend,
 - a **customizable assistant identity** (name, persona, default mode),
 - **provider-based integrations** you enable by bringing your own keys,
-- **voice and Telegram ingress** for hands-free and remote interaction,
+- **Telegram ingress** for remote interaction, plus outbound voice (TTS),
 - and a **future plugin system** for adding modules and providers without
   touching core code.
 
@@ -87,7 +120,7 @@ with zero cloud accounts.
 | Local module API | Localhost HTTP server exposing read-only module status and data, plus mode control |
 | Customizable assistant identity | Configurable assistant name, wake word, and default mode |
 | Provider integrations | Weather, news, calendar, mail summary, maps, Telegram, voice — all BYOK |
-| Voice / TTS | Speech synthesis via a voice provider (ElevenLabs today) |
+| Voice / TTS | Outbound speech synthesis via a voice provider (ElevenLabs today). No microphone capture or wake word yet — see [Known blockers](#known-blockers) |
 | Telegram ingress | Optional inbound/outbound bridge via your own bot token |
 | Read-only by default | Google modules use read-only scopes; the API never returns raw keys or tokens |
 | Standalone-first | Runs without any private dependency or cloud account |
@@ -184,6 +217,22 @@ pnpm build
 # 4. Run the mirror in development
 pnpm dev
 ```
+
+The `pnpm dev` window opens the **Aethos Mirror app shell** (v0.1): a
+fullscreen, kiosk-friendly MagicMirror-style surface with a central assistant
+orb (named **Aethos** by default), an ambient system-status rail, and glass
+widget zones (weather, headlines, map, briefing, browser/cockpit). With no
+provider keys configured, every zone renders an **honest placeholder** — each
+widget and status row is labelled `Live`, `Local only`, `Not configured`, or
+`Not implemented` so you always know what is real. No external API keys are
+required to launch the shell.
+
+The display identity (assistant name, product name, optional demo persona
+badge) is typed config in
+`apps/mirror-electron/src/renderer/src/config/mirror-ui-config.ts`. The public
+default is **Aethos Mirror / Aethos**; a deployment may inject overrides at
+runtime via `window.__AETHOS_MIRROR_UI__` (e.g. to show an `Ailee demo mode`
+badge) without changing the shipped product identity.
 
 By default the local module API binds to `127.0.0.1` on the configured port
 (`AETHOS_MIRROR_PORT`, default `3055`). Quick check once it is running:

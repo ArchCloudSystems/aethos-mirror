@@ -32,6 +32,91 @@ export interface MirrorState {
 }
 
 /**
+ * Browser navigation/control state for the real embedded Chromium surface.
+ *
+ * The browser surface is a main-process Electron `BrowserView` attached to the
+ * mirror window when browser mode is active. Remote pages run with no Node
+ * access and context isolation enabled. This type is the secret-free,
+ * read-only snapshot returned by `GET /browser/state`; all fields reflect the
+ * live `webContents` of the browser surface.
+ */
+export interface BrowserState {
+  /** True once the embedded browser surface has been created. */
+  implemented: boolean;
+  /** True while the browser surface is attached/visible (browser mode). */
+  active: boolean;
+  /** Currently loaded URL, or null when nothing has been loaded yet. */
+  currentUrl: string | null;
+  /** Page title of the loaded URL, or null. */
+  title: string | null;
+  /** Whether a navigation is in progress. */
+  loading: boolean;
+  /** Whether back navigation is currently possible. */
+  canGoBack: boolean;
+  /** Whether forward navigation is currently possible. */
+  canGoForward: boolean;
+  /** The configured home URL the surface returns to on "home". */
+  homeUrl: string;
+  /**
+   * Last navigation error, or null. Carries a stable, secret-free code and a
+   * short human-readable description (e.g. failed load). Never contains
+   * credentials or full response bodies.
+   */
+  lastError: BrowserError | null;
+}
+
+/** A stable, secret-free description of a failed navigation. */
+export interface BrowserError {
+  /** Electron error code (negative int) or 0 when not applicable. */
+  code: number;
+  /** Short, secret-free description of the failure. */
+  message: string;
+  /** The URL that failed to load, when known. */
+  url: string | null;
+  /** ISO timestamp of when the error occurred. */
+  occurredAt: string;
+}
+
+/**
+ * Voice subsystem state.
+ *
+ * NOTE: As of v0.1 there is NO live microphone capture and NO wake-word
+ * detection. Only outbound text-to-speech (ElevenLabs) is wired, and even that
+ * writes to a local temp file rather than auto-playing. `listening` and
+ * `wakeWordActive` are therefore part of the contract for a future capability
+ * and are reported `false` today. Do NOT surface them as live behavior.
+ */
+export interface VoiceState {
+  /** Whether voice (TTS) is configured. Mic capture is not implemented. */
+  configured: boolean;
+  /** Whether the master assistant switch is enabled. */
+  enabled: boolean;
+  /** Live microphone capture. NOT implemented in v0.1 — always false. */
+  listening: boolean;
+  /** Wake-word detection. NOT implemented in v0.1 — always false. */
+  wakeWordActive: boolean;
+  /** Whether TTS playback is currently in progress (best-effort). */
+  speaking: boolean;
+}
+
+/**
+ * Aggregate, secret-free runtime status of the mirror. Combines the core
+ * {@link MirrorState}, the per-module configuration status, and the truthful
+ * voice/browser capability flags into a single read-only snapshot. Carries no
+ * keys, tokens, or other secrets.
+ */
+export interface MirrorStatus {
+  mode: MirrorMode;
+  deviceId: string;
+  deviceName: string;
+  modules: MirrorModulesStatus;
+  voice: VoiceState;
+  browser: BrowserState;
+  /** ISO timestamp of when this status snapshot was produced. */
+  updatedAt: string;
+}
+
+/**
  * Telegram delivery mode. `disabled` means no token is configured or the
  * module is turned off; otherwise it reflects how updates are received.
  */

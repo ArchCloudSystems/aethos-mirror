@@ -2,12 +2,10 @@ import type {
   CalendarFeed,
   EmailSummary,
   NewsFeed,
-  WeatherReading
-} from "@aethos/mirror-protocol";
-import type {
+  WeatherReading,
   MirrorCommand,
   CommandResult
-} from "@aethos/mirror-protocol/dist/types";
+} from "@aethos/mirror-protocol";
 import { MirrorMapPanel } from "./MirrorMapPanel";
 import "./ModeComponents.css";
 
@@ -393,59 +391,22 @@ export function BriefingMode(): JSX.Element {
 // ─────────────────────────────────────────────────────────────────────────────────────────
 
 export function BrowserMode(): JSX.Element {
-  // Note: This uses iframe as Electron renderer cannot embed Chromium directly
-  // In production, use webContents.executeJavaScript for direct DOM manipulation
+  // Browser mode is NOT implemented in v0.1. There is no real embedded Chromium
+  // surface (no BrowserView / WebContentsView). Show an honest placeholder
+  // rather than a fake browser/search UI.
   return (
     <main className="mirror-shell browser">
       <section className="mirror-card browser-card">
         <header className="browser-header">
-          <div className="nav-bar">
-            <button className="nav-btn">←</button>
-            <button className="nav-btn">→</button>
-            <button className="nav-btn">↻</button>
-            <div className="url-bar">
-              <span className="protocol">https://</span>
-              <input type="text" value="example.com" readOnly />
-            </div>
-            <div className="search-bar">
-              <input type="text" placeholder="Search the web..." />
-            </div>
-          </div>
+          <p className="eyebrow">Browser</p>
+          <h1>Browser not implemented</h1>
         </header>
-
         <div className="browser-content">
-          <div className="browser-tabs">
-            <span className="active-tab">Search</span>
-            <span className="tab">History</span>
-            <span className="tab">Bookmarks</span>
-            <span className="tab close-tab">+</span>
-          </div>
-          <div className="browser-body">
-            <div className="search-result">
-              <h4 className="search-title">Aethos Mirror v0.2 Release Notes</h4>
-              <p className="search-snippet">
-                This update introduces native mode switching, improved API integration,
-                and better state management for multi-mode operation...
-              </p>
-              <a href="#" className="search-link">https://github.com/aethos/mirror/releases</a>
-            </div>
-            <div className="search-result">
-              <h4 className="search-title">React 19 Available Now</h4>
-              <p className="search-snippet">
-                The latest version of React brings new features for server components,
-                server actions, and improved performance...
-              </p>
-              <a href="#" className="search-link">https://react.dev</a>
-            </div>
-            <div className="search-result">
-              <h4 className="search-title">TypeScript 5.5 Improvements</h4>
-              <p className="search-snippet">
-                Type-only imports, better exhaustiveness checking, and enhanced
-                JSDoc Support in TypeScript 5.5...
-              </p>
-              <a href="#" className="search-link">https://typescriptlang.org</a>
-            </div>
-          </div>
+          <p>
+            A real embedded Chromium browser (Electron
+            BrowserView / WebContentsView) is planned but not yet built. This
+            mode is a placeholder — no web page is being loaded or rendered.
+          </p>
         </div>
       </section>
     </main>
@@ -604,38 +565,29 @@ export function VoiceOnlyMode(): JSX.Element {
       <section className="mirror-card voice-card">
         <header className="voice-header">
           <p className="eyebrow">Voice Mode</p>
-          <h1>Listening...</h1>
+          <h1>Text-to-speech only</h1>
         </header>
 
-        <div className="voice-visualizer">
-          <div className="bar active"></div>
-          <div className="bar"></div>
-          <div className="bar"></div>
-          <div className="bar active"></div>
-          <div className="bar"></div>
-          <div className="bar active"></div>
-          <div className="bar"></div>
-          <div className="bar active"></div>
-        </div>
-
         <div className="voice-status">
-          <span className="status-dot pulse"></span>
-          <span>Active Listening</span>
-          <span className="mic-status">Mic: <strong>Enabled</strong></span>
+          <span className="status-dot"></span>
+          <span>Mic capture: not implemented</span>
+          <span className="mic-status">
+            Wake word: <strong>not implemented</strong>
+          </span>
         </div>
 
         <div className="voice-config">
           <div className="config-row">
             <span>Voice Engine</span>
-            <strong>OpenAI TTS</strong>
+            <strong>ElevenLabs (TTS, BYOK)</strong>
           </div>
           <div className="config-row">
-            <span>Wake Word</span>
-            <strong>Mirror</strong>
+            <span>Microphone listening</span>
+            <strong>Not implemented</strong>
           </div>
           <div className="config-row">
-            <span>Default Language</span>
-            <strong>English (US)</strong>
+            <span>Wake word detection</span>
+            <strong>Not implemented</strong>
           </div>
         </div>
       </section>
@@ -656,11 +608,11 @@ export function SleepMode(): JSX.Element {
         </div>
         <div className="sleep-text">
           <h1>System Sleeping</h1>
-          <p>Press any key or speak wake word to activate</p>
+          <p>Press any key to activate</p>
         </div>
         <div className="sleep-timer">
-          <strong>Next Wake:</strong>
-          <span>08:00 AM</span>
+          <strong>Status:</strong>
+          <span>Placeholder — scheduled wake not implemented</span>
         </div>
       </section>
     </main>
@@ -693,7 +645,7 @@ export function ErrorMode({ error }: { error: string }): JSX.Element {
             <div className="error-info">
               <span>Time: {new Date().toLocaleTimeString()}</span>
               <span>Mode: landing</span>
-              <span>Device: mothership-main-display</span>
+              <span>Device: aethos-mirror</span>
             </div>
           </div>
         </div>

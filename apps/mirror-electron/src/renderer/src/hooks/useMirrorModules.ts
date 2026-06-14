@@ -4,12 +4,10 @@ import type {
   CalendarFeed,
   EmailSummary,
   NewsFeed,
-  WeatherReading
-} from "@aethos/mirror-protocol";
-import type {
+  WeatherReading,
   MirrorCommand,
   CommandResult
-} from "@aethos/mirror-protocol/dist/types";
+} from "@aethos/mirror-protocol";
 
 /**
  * useMirrorModules — renderer hook that consumes the LOCAL Mirror module API

@@ -118,7 +118,7 @@ function defaultConfig(): AethosMirrorConfig {
   return {
     schemaVersion: 1,
     assistantName: "Aethos",
-    weatherLocation: "San Diego, CA",
+    weatherLocation: "Your City, ST",
     runtime: { mode: "desktop", apiHost: "127.0.0.1", apiPort: 3055 },
     providers: {
       openWeather: { enabled: false },

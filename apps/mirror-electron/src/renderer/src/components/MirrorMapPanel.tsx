@@ -14,9 +14,13 @@
  * direction (soft glow, calm palette) is preserved.
  */
 
-// San Diego, CA — matches AETHOS_MIRROR_DEFAULT_LAT/LON in .env.example.
-const FALLBACK_LAT = 32.7157;
-const FALLBACK_LON = -117.1611;
+import "./MirrorMapPanel.css";
+
+// Neutral fallback coordinates (0,0) used only when no valid coordinate is
+// supplied. Matches the placeholder AETHOS_MIRROR_DEFAULT_LAT/LON in
+// .env.example; configure your real location there.
+const FALLBACK_LAT = 0.0;
+const FALLBACK_LON = 0.0;
 
 interface MirrorMapPanelProps {
   latitude?: number | null;

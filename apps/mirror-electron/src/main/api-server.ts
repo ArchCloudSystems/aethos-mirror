@@ -1,6 +1,16 @@
 import http from "node:http";
 import type { MirrorMode } from "@aethos/mirror-protocol";
 import { getMirrorConfigStatus, getMirrorModulesStatus } from "./config";
+import {
+  browserGoBack,
+  browserGoForward,
+  browserGoHome,
+  getBrowserState,
+  hideBrowserSurface,
+  navigateBrowser,
+  reloadBrowser,
+  showBrowserSurface
+} from "./browser";
 import { isMirrorCommand, runMirrorCommand } from "./modules/commands";
 import { synthesizeSpeech, getVoiceStatus } from "./modules/elevenlabs";
 import { getCalendarFeed, getEmailSummary } from "./modules/google";
@@ -259,7 +269,78 @@ export function startApiServer(port: number): http.Server {
           return;
         }
 
-        sendJson(res, 200, setMirrorMode(mode));
+        const updated = setMirrorMode(mode);
+
+        // Show the real browser surface only in browser mode; hide it for any
+        // other mode so the renderer mirror home is visible.
+        if (mode === "browser") {
+          showBrowserSurface();
+        } else {
+          hideBrowserSurface();
+        }
+
+        sendJson(res, 200, updated);
+        return;
+      }
+
+      // ── Real embedded browser surface ───────────────────────────────────
+      if (method === "GET" && url.pathname === "/browser/state") {
+        sendJson(res, 200, { ok: true, browser: getBrowserState() });
+        return;
+      }
+
+      if (method === "POST" && url.pathname === "/browser/navigate") {
+        const body = await readJsonBody(req);
+        const targetUrl =
+          body && typeof body === "object" && "url" in body
+            ? String((body as { url: unknown }).url)
+            : "";
+        const result = navigateBrowser(targetUrl);
+        sendJson(res, result.ok ? 200 : 400, {
+          ok: result.ok,
+          error: result.error,
+          browser: getBrowserState()
+        });
+        return;
+      }
+
+      if (method === "POST" && url.pathname === "/browser/reload") {
+        const result = reloadBrowser();
+        sendJson(res, result.ok ? 200 : 400, {
+          ok: result.ok,
+          error: result.error,
+          browser: getBrowserState()
+        });
+        return;
+      }
+
+      if (method === "POST" && url.pathname === "/browser/back") {
+        const result = browserGoBack();
+        sendJson(res, result.ok ? 200 : 400, {
+          ok: result.ok,
+          error: result.error,
+          browser: getBrowserState()
+        });
+        return;
+      }
+
+      if (method === "POST" && url.pathname === "/browser/forward") {
+        const result = browserGoForward();
+        sendJson(res, result.ok ? 200 : 400, {
+          ok: result.ok,
+          error: result.error,
+          browser: getBrowserState()
+        });
+        return;
+      }
+
+      if (method === "POST" && url.pathname === "/browser/home") {
+        const result = browserGoHome();
+        sendJson(res, result.ok ? 200 : 400, {
+          ok: result.ok,
+          error: result.error,
+          browser: getBrowserState()
+        });
         return;
       }
 
