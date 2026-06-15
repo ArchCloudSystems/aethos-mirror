@@ -68,6 +68,11 @@ function readConfig(paths) {
       `Malformed config.json (expected a JSON object): ${paths.configPath}`
     );
   }
+  // Backward compatibility: migrate old config keys to current names.
+  if (parsed.modules && "aetherCoreBridge" in parsed.modules && !("assistantBridge" in parsed.modules)) {
+    parsed.modules.assistantBridge = parsed.modules.aetherCoreBridge;
+    delete parsed.modules.aetherCoreBridge;
+  }
   return { config: deepMerge(createDefaultConfig(), parsed), exists: true };
 }
 
@@ -167,7 +172,7 @@ async function main() {
       ["cameraPreview", m.cameraPreview],
       ["iotHome", m.iotHome],
       ["webhookActions", m.webhookActions],
-      ["aetherCoreBridge", m.aetherCoreBridge]
+      ["assistantBridge", m.assistantBridge]
     ];
     for (const [name, enabled] of moduleEntries) {
       const status = enabled ? "enabled" : "disabled";

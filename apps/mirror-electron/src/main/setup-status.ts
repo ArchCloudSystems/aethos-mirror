@@ -135,7 +135,7 @@ function defaultConfig(): AethosMirrorConfig {
       cameraPreview: false,
       iotHome: false,
       webhookActions: false,
-      aetherCoreBridge: false
+      assistantBridge: false
     },
     providers: {
       openWeather: { enabled: false },
@@ -173,6 +173,13 @@ function readConfigFile(configPath: string): AethosMirrorConfig {
   }
   if (typeof parsed !== "object" || parsed === null) {
     throw new MalformedConfigError("config.json must be a JSON object");
+  }
+  // Backward compatibility: migrate old config keys to current names.
+  const rec = parsed as Record<string, unknown>;
+  const mods = rec.modules as Record<string, unknown> | undefined;
+  if (mods && "aetherCoreBridge" in mods && !("assistantBridge" in mods)) {
+    mods.assistantBridge = mods.aetherCoreBridge;
+    delete mods.aetherCoreBridge;
   }
   // Deep-merge over defaults so a partial/older file is upgraded in shape.
   return deepMerge(defaultConfig(), parsed as Record<string, unknown>);

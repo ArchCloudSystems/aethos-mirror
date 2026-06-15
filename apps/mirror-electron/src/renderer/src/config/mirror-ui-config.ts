@@ -26,8 +26,8 @@ export interface MirrorUiConfig {
   demoMode: boolean;
   /**
    * Label shown in the demo badge when {@link demoMode} is on. Defaults to a
-   * neutral "Demo mode". A deployment may opt in to a persona label (e.g.
-   * "Ailee demo mode") — but Ailee is never the hardcoded product identity.
+   * neutral "Demo mode". A deployment may opt in to a custom persona label —
+   * but a private persona is never the hardcoded product identity.
    */
   demoPersonaLabel: string;
   /** Local control API port (main-process server, 127.0.0.1). */

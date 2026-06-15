@@ -240,9 +240,9 @@ async function run() {
     "Webhook actions? (placeholder)",
     config.modules.webhookActions !== undefined ? config.modules.webhookActions : false
   );
-  config.modules.aetherCoreBridge = await prompter.askBool(
-    "AetherCore bridge? (placeholder)",
-    config.modules.aetherCoreBridge !== undefined ? config.modules.aetherCoreBridge : false
+  config.modules.assistantBridge = await prompter.askBool(
+    "Assistant bridge? (placeholder)",
+    config.modules.assistantBridge !== undefined ? config.modules.assistantBridge : false
   );
 
   // ─── 5. Providers ────────────────────────────────────────────────────
@@ -486,7 +486,7 @@ async function run() {
   console.log(`    cameraPreview:    ${m.cameraPreview} (placeholder)`);
   console.log(`    iotHome:          ${m.iotHome} (placeholder)`);
   console.log(`    webhookActions:   ${m.webhookActions} (placeholder)`);
-  console.log(`    aetherCoreBridge: ${m.aetherCoreBridge} (placeholder)`);
+  console.log(`    assistantBridge:  ${m.assistantBridge} (placeholder)`);
 
   // Provider summary
   const p = config.providers;

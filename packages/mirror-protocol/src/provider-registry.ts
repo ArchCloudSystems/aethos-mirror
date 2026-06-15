@@ -96,8 +96,8 @@ export interface ModuleToggles {
   iotHome: boolean;
   /** Placeholder — not implemented in v0.1. */
   webhookActions: boolean;
-  /** Placeholder — optional AetherCore bridge. */
-  aetherCoreBridge: boolean;
+  /** Placeholder — optional assistant bridge. */
+  assistantBridge: boolean;
 }
 
 /**

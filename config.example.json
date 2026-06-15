@@ -23,7 +23,7 @@
     "cameraPreview": false,
     "iotHome": false,
     "webhookActions": false,
-    "aetherCoreBridge": false
+    "assistantBridge": false
   },
   "providers": {
     "openWeather": { "enabled": false },

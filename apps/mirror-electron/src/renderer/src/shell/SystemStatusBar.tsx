@@ -26,7 +26,7 @@ interface SystemStatusRow {
  *   - Voice reflects ElevenLabs config (TTS only; no mic/wake word) →
  *     "Live" when configured, otherwise "Not configured".
  *   - Control API is "Live" when the local server answered, else "Local only".
- *   - AetherCore connection reflects the OPTIONAL assistant bridge config;
+ *   - Assistant bridge reflects the OPTIONAL assistant bridge config;
  *     disabled by default → "Not configured".
  */
 function buildRows(
@@ -62,8 +62,8 @@ function buildRows(
       note: "127.0.0.1 local server"
     },
     {
-      key: "aethercore",
-      label: "AetherCore connection",
+      key: "assistant-bridge",
+      label: "Assistant bridge",
       status: bridgeConfigured ? STATUS.live : STATUS.notConfigured,
       note: "Optional assistant bridge"
     }

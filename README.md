@@ -235,7 +235,7 @@ The `pnpm setup` command walks you through the full configuration:
 2. **Interface profile** — `desktop`, `kiosk`, `mirror`, or `mobile`.
 3. **Module toggles** — weather, news, map, calendar, email summary, browser,
    system status, plus placeholders for camera preview, IoT/home automation,
-   webhook actions, and an optional AetherCore bridge.
+   webhook actions, and an optional assistant bridge.
 4. **LLM provider** — `none` / `demo` (no keys needed), `openai`,
    `openai-compatible`, `anthropic`, `gemini`, `ollama` (local), or `custom`.
 5. **Service providers** — OpenWeather, NewsAPI, Telegram, ElevenLabs, Google

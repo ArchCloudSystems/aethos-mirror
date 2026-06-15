@@ -157,7 +157,7 @@ export function createDefaultConfig(now = new Date()) {
       cameraPreview: false,
       iotHome: false,
       webhookActions: false,
-      aetherCoreBridge: false
+      assistantBridge: false
     },
     providers: {
       openWeather: { enabled: false },
@@ -226,6 +226,11 @@ export function readConfigFile(paths = getConfigPaths()) {
   }
   const raw = readFileSync(paths.configPath, "utf8");
   const parsed = JSON.parse(raw);
+  // --- Backward compatibility: migrate old config keys to current names ---
+  if (parsed.modules && "aetherCoreBridge" in parsed.modules && !("assistantBridge" in parsed.modules)) {
+    parsed.modules.assistantBridge = parsed.modules.aetherCoreBridge;
+    delete parsed.modules.aetherCoreBridge;
+  }
   return deepMerge(createDefaultConfig(), parsed);
 }
 
