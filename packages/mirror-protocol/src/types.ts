@@ -399,11 +399,18 @@ export interface CommandResult {
 }
 
 /**
- * LLM provider choices supported by the v0.1.0 backend. `none` means no
- * provider is selected. The two real providers are local Ollama and any
- * OpenAI-compatible chat-completions endpoint.
+ * LLM provider choices supported by the v0.1+ backend. `none` means no
+ * provider is selected. The real providers are local Ollama, OpenAI-compatible
+ * endpoints, Anthropic, Gemini, and arbitrary custom base URLs. `demo` is a
+ * no-op placeholder that works without keys.
  */
-export type LlmProvider = "ollama" | "openai-compatible";
+export type LlmProvider =
+  | "ollama"
+  | "openai"
+  | "openai-compatible"
+  | "anthropic"
+  | "gemini"
+  | "custom";
 
 /**
  * Read-only LLM status returned by `GET /llm/status`. Carries only non-secret

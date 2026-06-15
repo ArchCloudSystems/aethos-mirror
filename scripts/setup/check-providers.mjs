@@ -140,11 +140,68 @@ async function main() {
   const ctx = buildContext(config, secrets, envLocal);
   const readiness = registry.deriveProviderReadiness(ctx);
 
-  // Print header + one line per provider, in registry order. Secret-free.
+  // Print header
   console.log("Aethos Mirror provider check");
-  console.log(`Assistant: ${config.assistantName}`);
+  console.log("────────────────────────────");
+
+  // Identity summary
+  console.log(`  Assistant:        ${config.assistantName}`);
+  console.log(`  Personality:      ${config.personalityMode || "calm"}`);
+  console.log(`  Interface:        ${config.interfaceProfile || "desktop"}`);
+  console.log(`  Orb visible:      ${config.orbVisible !== undefined ? config.orbVisible : true}`);
+  console.log(`  Wake word:        ${config.wakeWord || "(disabled)"}`);
+  console.log("");
+
+  // Module toggles
+  if (config.modules) {
+    console.log("Module toggles:");
+    const m = config.modules;
+    const moduleEntries = [
+      ["weather", m.weather],
+      ["news", m.news],
+      ["map", m.map],
+      ["calendar", m.calendar],
+      ["emailSummary", m.emailSummary],
+      ["browser", m.browser],
+      ["systemStatus", m.systemStatus],
+      ["cameraPreview", m.cameraPreview],
+      ["iotHome", m.iotHome],
+      ["webhookActions", m.webhookActions],
+      ["aetherCoreBridge", m.aetherCoreBridge]
+    ];
+    for (const [name, enabled] of moduleEntries) {
+      const status = enabled ? "enabled" : "disabled";
+      const pad = name.padEnd(18);
+      console.log(`  ${pad}${status}`);
+    }
+    console.log("");
+  }
+
+  // Provider readiness
+  console.log("Provider status:");
   for (const provider of readiness) {
-    console.log(`${provider.label}: ${provider.statusMessage}`);
+    const pad = `${provider.label}:`.padEnd(20);
+    console.log(`  ${pad}${provider.statusMessage}`);
+  }
+
+  // Privacy defaults summary
+  console.log("");
+  console.log("Privacy defaults:");
+  const llmProvider = config.providers?.llm?.provider || "none";
+  const llmEnabled = config.providers?.llm?.enabled || false;
+  if (!llmEnabled || llmProvider === "none" || llmProvider === "demo") {
+    console.log("  LLM:              demo/local mode — no API keys required");
+  } else if (llmProvider === "ollama") {
+    console.log("  LLM:              local Ollama — no cloud keys required");
+  } else {
+    console.log(`  LLM:              cloud provider (${llmProvider}) — key required`);
+  }
+
+  const googleEnabled = config.providers?.google?.enabled || false;
+  if (!googleEnabled) {
+    console.log("  Email/Calendar:   disabled until OAuth configured");
+  } else {
+    console.log("  Email/Calendar:   Google OAuth configured");
   }
 
   if (!existsSync(paths.configPath) || !existsSync(paths.secretsPath)) {

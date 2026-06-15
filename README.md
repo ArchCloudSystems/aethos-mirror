@@ -188,7 +188,6 @@ mirror.
 |--------|--------|
 | LibreChat bridge (conversation surface) | Roadmap — see `docs/architecture/librechat-bridge.md` |
 | Plugin registry | Roadmap — see `docs/architecture/plugin-system.md` |
-| Installer wizard (terminal first-run setup) | Roadmap |
 | apt repository | Roadmap — **does not exist today** |
 | Raspberry Pi image (kiosk) | Roadmap — **does not exist today** |
 | Shared memory database | Roadmap — local store for cross-surface memory |
@@ -205,20 +204,57 @@ Electron-capable graphics. This is a `pnpm` workspace.
 # 1. Install dependencies
 pnpm install
 
-# 2. Type-check the workspace
+# 2. Run the setup wizard (interactive first-run config)
+#    Generates .local/aethos-mirror/config.json (non-secret settings)
+#    and .local/aethos-mirror/secrets.env (BYOK keys). Both git-ignored.
+pnpm setup
+
+# 3. Check provider readiness (secret-free report)
+pnpm providers:check
+
+# 4. Type-check the workspace
 #    (the shared protocol package must be built before the app type-checks;
 #     see docs/getting-started/local-development.md if you hit a type error
 #     about @aethos/mirror-protocol)
 pnpm typecheck
 
-# 3. Build all packages and the app
+# 5. Build all packages and the app
 pnpm build
 
-# 4. Run the mirror in development
+# 6. Run the mirror in development
 pnpm dev
 ```
 
-The `pnpm dev` window opens the **Aethos Mirror app shell** (v0.1): a
+### Setup wizard
+
+The `pnpm setup` command walks you through the full configuration:
+
+1. **Assistant identity** — name (default: `Aethos`), wake word
+   (optional/disabled), personality mode (`calm`, `lively`, `minimal`,
+   `custom`), orb visibility.
+2. **Interface profile** — `desktop`, `kiosk`, `mirror`, or `mobile`.
+3. **Module toggles** — weather, news, map, calendar, email summary, browser,
+   system status, plus placeholders for camera preview, IoT/home automation,
+   webhook actions, and an optional AetherCore bridge.
+4. **LLM provider** — `none` / `demo` (no keys needed), `openai`,
+   `openai-compatible`, `anthropic`, `gemini`, `ollama` (local), or `custom`.
+5. **Service providers** — OpenWeather, NewsAPI, Telegram, ElevenLabs, Google
+   Calendar/Gmail (read-only), LibreChat, Assistant Bridge.
+
+Running in a non-TTY environment (CI) writes defaults without prompting.
+Re-running preserves existing values; press Enter to keep them.
+
+A reference config schema is in [`config.example.json`](config.example.json).
+
+### Privacy defaults
+
+- **Demo/local mode** works without any API keys.
+- Cloud providers remain disabled until you configure keys.
+- Email/calendar stay disabled until Google OAuth is configured.
+- All secrets live in `.local/aethos-mirror/secrets.env` (git-ignored).
+- The runtime API never exposes raw keys or tokens.
+
+The `pnpm dev` window opens the **Aethos Mirror app shell**: a
 fullscreen, kiosk-friendly MagicMirror-style surface with a central assistant
 orb (named **Aethos** by default), an ambient system-status rail, and glass
 widget zones (weather, headlines, map, briefing, browser/cockpit). With no
@@ -231,8 +267,8 @@ The display identity (assistant name, product name, optional demo persona
 badge) is typed config in
 `apps/mirror-electron/src/renderer/src/config/mirror-ui-config.ts`. The public
 default is **Aethos Mirror / Aethos**; a deployment may inject overrides at
-runtime via `window.__AETHOS_MIRROR_UI__` (e.g. to show an `Ailee demo mode`
-badge) without changing the shipped product identity.
+runtime via `window.__AETHOS_MIRROR_UI__` without changing the shipped product
+identity.
 
 By default the local module API binds to `127.0.0.1` on the configured port
 (`AETHOS_MIRROR_PORT`, default `3055`). Quick check once it is running:
@@ -251,15 +287,19 @@ list of local API endpoints, is in
 ## Provider setup
 
 Every integration is BYOK. Nothing works until you supply your own keys, and no
-keys ship with the project. Copy the example environment file and fill it in
-locally:
+keys ship with the project. The recommended flow is:
 
 ```bash
+# Interactive setup wizard (generates both config.json and secrets.env)
+pnpm setup
+
+# Or copy the example env file for manual configuration
 cp .env.example .env.local   # .env.local is git-ignored — never commit it
 ```
 
 Step-by-step provider instructions (Telegram, ElevenLabs, OpenWeather, NewsAPI,
-Google read-only Calendar/Gmail, and the no-key OpenStreetMap map) are in
+Google read-only Calendar/Gmail, OpenAI, Anthropic, Gemini, Ollama, and the
+no-key OpenStreetMap map) are in
 [`docs/getting-started/provider-setup.md`](docs/getting-started/provider-setup.md).
 
 ---
@@ -306,7 +346,7 @@ See [`docs/architecture/public-private-split.md`](docs/architecture/public-priva
 | Version | Theme |
 |---------|-------|
 | `v0.1` | Local module spine — display engine, modules, local API |
-| `v0.2` | Setup wizard — terminal first-run configuration |
+| `v0.2` | **Setup wizard — terminal first-run configuration** ✅ |
 | `v0.3` | LibreChat bridge — conversation surface |
 | `v0.4` | Plugin system — manifest, permissions, registry |
 | `v0.5` | Debian service / apt packaging |

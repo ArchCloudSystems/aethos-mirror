@@ -1,10 +1,10 @@
 #!/usr/bin/env node
-// Aethos Mirror — setup wizard (v1).
+// Aethos Mirror — setup wizard (v2).
 //
 // `pnpm setup` runs this. It interactively collects NON-SECRET settings and
 // BYOK secrets, then writes two git-ignored files under `.local/aethos-mirror/`:
 //
-//   - config.json   non-secret settings (schemaVersion 1)
+//   - config.json   non-secret settings (schemaVersion 2)
 //   - secrets.env   secret keys/tokens
 //
 // Rules honored here:
@@ -32,6 +32,26 @@ import {
 
 const paths = getConfigPaths();
 const interactive = Boolean(process.stdin.isTTY && process.stdout.isTTY);
+
+// ---------------------------------------------------------------------------
+// Provider → default base URL map
+// ---------------------------------------------------------------------------
+const LLM_BASE_URL_DEFAULTS = {
+  ollama: DEFAULT_OLLAMA_BASE_URL,
+  openai: "https://api.openai.com/v1",
+  "openai-compatible": "",
+  anthropic: "https://api.anthropic.com",
+  gemini: "https://generativelanguage.googleapis.com",
+  custom: "",
+  demo: "",
+  none: ""
+};
+
+// ---------------------------------------------------------------------------
+// Personality & interface choices
+// ---------------------------------------------------------------------------
+const PERSONALITY_MODES = ["calm", "lively", "minimal", "custom"];
+const INTERFACE_PROFILES = ["desktop", "kiosk", "mirror", "mobile"];
 
 // ---------------------------------------------------------------------------
 // Prompt helpers
@@ -136,12 +156,101 @@ async function run() {
     );
   }
 
-  // --- Core identity -------------------------------------------------------
+  // ─── 1. Assistant identity ───────────────────────────────────────────
+  if (interactive) {
+    console.log("\n── Assistant identity ──────────────────────────────────────");
+  }
   config.assistantName = await prompter.ask("Assistant name", config.assistantName);
+  config.wakeWord = await prompter.ask(
+    "Wake word (leave empty to disable)",
+    config.wakeWord
+  );
+  config.personalityMode = await prompter.askChoice(
+    "Personality mode",
+    PERSONALITY_MODES,
+    config.personalityMode || "calm"
+  );
+  config.orbVisible = await prompter.askBool(
+    "Show assistant orb?",
+    config.orbVisible !== undefined ? config.orbVisible : true
+  );
+
+  // ─── 2. Interface profile ────────────────────────────────────────────
+  if (interactive) {
+    console.log("\n── Interface profile ───────────────────────────────────────");
+  }
+  config.interfaceProfile = await prompter.askChoice(
+    "Interface profile",
+    INTERFACE_PROFILES,
+    config.interfaceProfile || "desktop"
+  );
+
+  // ─── 3. Location ─────────────────────────────────────────────────────
   config.weatherLocation = await prompter.ask(
     "Weather location",
     config.weatherLocation
   );
+
+  // ─── 4. Module toggles ──────────────────────────────────────────────
+  if (interactive) {
+    console.log("\n── Module toggles ─────────────────────────────────────────");
+    console.log("Enable/disable individual modules. Disabled modules are hidden.");
+  }
+  // Ensure modules object exists (upgrade from v1)
+  if (!config.modules || typeof config.modules !== "object") {
+    config.modules = createDefaultConfig().modules;
+  }
+  config.modules.weather = await prompter.askBool(
+    "Weather module?",
+    config.modules.weather !== undefined ? config.modules.weather : true
+  );
+  config.modules.news = await prompter.askBool(
+    "News module?",
+    config.modules.news !== undefined ? config.modules.news : true
+  );
+  config.modules.map = await prompter.askBool(
+    "Map module?",
+    config.modules.map !== undefined ? config.modules.map : true
+  );
+  config.modules.calendar = await prompter.askBool(
+    "Calendar module?",
+    config.modules.calendar !== undefined ? config.modules.calendar : true
+  );
+  config.modules.emailSummary = await prompter.askBool(
+    "Email summary module?",
+    config.modules.emailSummary !== undefined ? config.modules.emailSummary : true
+  );
+  config.modules.browser = await prompter.askBool(
+    "Browser module? (placeholder)",
+    config.modules.browser !== undefined ? config.modules.browser : false
+  );
+  config.modules.systemStatus = await prompter.askBool(
+    "System status module?",
+    config.modules.systemStatus !== undefined ? config.modules.systemStatus : true
+  );
+  config.modules.cameraPreview = await prompter.askBool(
+    "Camera preview? (placeholder)",
+    config.modules.cameraPreview !== undefined ? config.modules.cameraPreview : false
+  );
+  config.modules.iotHome = await prompter.askBool(
+    "IoT / home automation? (placeholder)",
+    config.modules.iotHome !== undefined ? config.modules.iotHome : false
+  );
+  config.modules.webhookActions = await prompter.askBool(
+    "Webhook actions? (placeholder)",
+    config.modules.webhookActions !== undefined ? config.modules.webhookActions : false
+  );
+  config.modules.aetherCoreBridge = await prompter.askBool(
+    "AetherCore bridge? (placeholder)",
+    config.modules.aetherCoreBridge !== undefined ? config.modules.aetherCoreBridge : false
+  );
+
+  // ─── 5. Providers ────────────────────────────────────────────────────
+  if (interactive) {
+    console.log("\n── Provider configuration ──────────────────────────────────");
+    console.log("Cloud providers are disabled until you configure API keys.");
+    console.log("Demo/local mode works without any keys.\n");
+  }
 
   // --- OpenWeather ---------------------------------------------------------
   config.providers.openWeather.enabled = await prompter.askBool(
@@ -234,6 +343,11 @@ async function run() {
   }
 
   // --- LLM -----------------------------------------------------------------
+  if (interactive) {
+    console.log("\n── LLM provider ───────────────────────────────────────────");
+    console.log("Providers: none, demo (no keys), openai, openai-compatible,");
+    console.log("           anthropic, gemini, ollama (local), custom\n");
+  }
   config.providers.llm.enabled = await prompter.askBool(
     "Enable LLM integration?",
     config.providers.llm.enabled
@@ -246,23 +360,52 @@ async function run() {
         ? "ollama"
         : config.providers.llm.provider
     );
+
+    const provider = config.providers.llm.provider;
+
+    // Smart base URL default per provider
     const defaultBaseUrl =
       config.providers.llm.baseUrl ||
-      (config.providers.llm.provider === "ollama" ? DEFAULT_OLLAMA_BASE_URL : "");
-    config.providers.llm.baseUrl = await prompter.ask(
-      "LLM base URL",
-      defaultBaseUrl
-    );
-    config.providers.llm.model = await prompter.ask(
-      "LLM model",
-      config.providers.llm.model
-    );
-    // API key only meaningful for openai-compatible providers; ask anyway so
-    // re-running preserves it. Ollama local installs typically need none.
-    secrets.LLM_API_KEY = await prompter.askSecret(
-      "LLM API key",
-      secrets.LLM_API_KEY
-    );
+      LLM_BASE_URL_DEFAULTS[provider] ||
+      "";
+
+    if (provider !== "none" && provider !== "demo") {
+      config.providers.llm.baseUrl = await prompter.ask(
+        "LLM base URL",
+        defaultBaseUrl
+      );
+      config.providers.llm.model = await prompter.ask(
+        "LLM model",
+        config.providers.llm.model
+      );
+    } else {
+      // demo/none don't need base URL or model
+      config.providers.llm.baseUrl = "";
+      config.providers.llm.model = "";
+    }
+
+    // Provider-specific API key prompts
+    if (provider === "anthropic") {
+      secrets.ANTHROPIC_API_KEY = await prompter.askSecret(
+        "Anthropic API key",
+        secrets.ANTHROPIC_API_KEY
+      );
+    } else if (provider === "gemini") {
+      secrets.GEMINI_API_KEY = await prompter.askSecret(
+        "Gemini API key",
+        secrets.GEMINI_API_KEY
+      );
+    } else if (
+      provider === "openai" ||
+      provider === "openai-compatible" ||
+      provider === "custom"
+    ) {
+      secrets.LLM_API_KEY = await prompter.askSecret(
+        "LLM API key",
+        secrets.LLM_API_KEY
+      );
+    }
+    // ollama and demo need no key
   } else {
     config.providers.llm.provider = "none";
   }
@@ -320,29 +463,59 @@ async function run() {
     `  secrets: ${paths.secretsPath} (${hadSecrets ? "updated" : "created"}, contents not shown)`
   );
   console.log("\nNon-secret summary:");
-  console.log(`  assistantName:    ${config.assistantName}`);
-  console.log(`  weatherLocation:  ${config.weatherLocation}`);
+  console.log(`  assistantName:      ${config.assistantName}`);
+  console.log(`  wakeWord:           ${config.wakeWord || "(disabled)"}`);
+  console.log(`  personalityMode:    ${config.personalityMode}`);
+  console.log(`  orbVisible:         ${config.orbVisible}`);
+  console.log(`  interfaceProfile:   ${config.interfaceProfile}`);
+  console.log(`  weatherLocation:    ${config.weatherLocation}`);
   console.log(
-    `  runtime:          ${config.runtime.mode} @ ${config.runtime.apiHost}:${config.runtime.apiPort}`
+    `  runtime:            ${config.runtime.mode} @ ${config.runtime.apiHost}:${config.runtime.apiPort}`
   );
+
+  // Module toggles
+  const m = config.modules;
+  console.log("  modules:");
+  console.log(`    weather:          ${m.weather}`);
+  console.log(`    news:             ${m.news}`);
+  console.log(`    map:              ${m.map}`);
+  console.log(`    calendar:         ${m.calendar}`);
+  console.log(`    emailSummary:     ${m.emailSummary}`);
+  console.log(`    browser:          ${m.browser}`);
+  console.log(`    systemStatus:     ${m.systemStatus}`);
+  console.log(`    cameraPreview:    ${m.cameraPreview} (placeholder)`);
+  console.log(`    iotHome:          ${m.iotHome} (placeholder)`);
+  console.log(`    webhookActions:   ${m.webhookActions} (placeholder)`);
+  console.log(`    aetherCoreBridge: ${m.aetherCoreBridge} (placeholder)`);
+
+  // Provider summary
   const p = config.providers;
   console.log("  providers enabled:");
-  console.log(`    openWeather:     ${p.openWeather.enabled}`);
-  console.log(`    newsApi:         ${p.newsApi.enabled}`);
-  console.log(`    telegram:        ${p.telegram.enabled}`);
-  console.log(`    elevenLabs:      ${p.elevenLabs.enabled}`);
+  console.log(`    openWeather:      ${p.openWeather.enabled}`);
+  console.log(`    newsApi:          ${p.newsApi.enabled}`);
+  console.log(`    telegram:         ${p.telegram.enabled}`);
+  console.log(`    elevenLabs:       ${p.elevenLabs.enabled}`);
   console.log(
-    `    google:          ${p.google.enabled} (calendar=${p.google.calendarEnabled}, gmail=${p.google.gmailEnabled})`
+    `    google:           ${p.google.enabled} (calendar=${p.google.calendarEnabled}, gmail=${p.google.gmailEnabled})`
   );
   console.log(
-    `    llm:             ${p.llm.enabled} (provider=${p.llm.provider})`
+    `    llm:              ${p.llm.enabled} (provider=${p.llm.provider})`
   );
-  console.log(`    libreChat:       ${p.libreChat.enabled}`);
-  console.log(`    assistantBridge: ${p.assistantBridge.enabled}`);
+  console.log(`    libreChat:        ${p.libreChat.enabled}`);
+  console.log(`    assistantBridge:  ${p.assistantBridge.enabled}`);
+
+  // Privacy note
   console.log(
     "\nSecrets were written to secrets.env and intentionally NOT printed."
   );
   console.log("Both files are git-ignored. Never commit them.");
+  console.log(
+    "\nPrivacy: demo/local mode works without any API keys. Cloud providers"
+  );
+  console.log(
+    "remain disabled until you configure keys. Email/calendar/Google are"
+  );
+  console.log("disabled until OAuth tokens are provided.");
 }
 
 run().catch((err) => {

@@ -116,10 +116,27 @@ function readEnvFile(filePath: string): Record<string, string> {
 /** Default non-secret config used when config.json is absent. */
 function defaultConfig(): AethosMirrorConfig {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     assistantName: "Aethos",
+    wakeWord: "",
+    personalityMode: "calm",
+    orbVisible: true,
+    interfaceProfile: "desktop",
     weatherLocation: "Your City, ST",
     runtime: { mode: "desktop", apiHost: "127.0.0.1", apiPort: 3055 },
+    modules: {
+      weather: true,
+      news: true,
+      map: true,
+      calendar: true,
+      emailSummary: true,
+      browser: false,
+      systemStatus: true,
+      cameraPreview: false,
+      iotHome: false,
+      webhookActions: false,
+      aetherCoreBridge: false
+    },
     providers: {
       openWeather: { enabled: false },
       newsApi: { enabled: false },

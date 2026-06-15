@@ -25,10 +25,19 @@ import { fileURLToPath } from "node:url";
 const moduleDir = path.dirname(fileURLToPath(import.meta.url));
 
 /** Current config.json schema version. */
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 /** Provider id choices for the LLM integration. */
-export const LLM_PROVIDERS = ["none", "ollama", "openai-compatible"];
+export const LLM_PROVIDERS = [
+  "none",
+  "demo",
+  "openai",
+  "openai-compatible",
+  "anthropic",
+  "gemini",
+  "ollama",
+  "custom"
+];
 
 /** Default base URL for a local Ollama install. */
 export const DEFAULT_OLLAMA_BASE_URL = "http://127.0.0.1:11434";
@@ -53,6 +62,8 @@ export const SECRET_KEYS = [
   "GOOGLE_REFRESH_TOKEN",
   "GOOGLE_CALENDAR_IDS",
   "LLM_API_KEY",
+  "ANTHROPIC_API_KEY",
+  "GEMINI_API_KEY",
   "ASSISTANT_BRIDGE_TOKEN",
   "LIBRECHAT_API_KEY"
 ];
@@ -72,6 +83,8 @@ export const TRULY_SECRET_KEYS = new Set([
   "GOOGLE_CLIENT_SECRET",
   "GOOGLE_REFRESH_TOKEN",
   "LLM_API_KEY",
+  "ANTHROPIC_API_KEY",
+  "GEMINI_API_KEY",
   "ASSISTANT_BRIDGE_TOKEN",
   "LIBRECHAT_API_KEY"
 ]);
@@ -123,11 +136,28 @@ export function createDefaultConfig(now = new Date()) {
   return {
     schemaVersion: SCHEMA_VERSION,
     assistantName: "Aethos",
+    wakeWord: "",
+    personalityMode: "calm",
+    orbVisible: true,
+    interfaceProfile: "desktop",
     weatherLocation: "San Diego, CA",
     runtime: {
       mode: "desktop",
       apiHost: "127.0.0.1",
       apiPort: 3055
+    },
+    modules: {
+      weather: true,
+      news: true,
+      map: true,
+      calendar: true,
+      emailSummary: true,
+      browser: false,
+      systemStatus: true,
+      cameraPreview: false,
+      iotHome: false,
+      webhookActions: false,
+      aetherCoreBridge: false
     },
     providers: {
       openWeather: { enabled: false },

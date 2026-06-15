@@ -44,22 +44,93 @@ export type ConfigSource =
   | "config.json"
   | "none";
 
-/** LLM provider choices supported by the public foundation. */
-export type LlmProviderChoice = "none" | "ollama" | "openai-compatible";
+/**
+ * LLM provider choices supported by the public foundation.
+ *
+ * - `"none"` — no LLM provider selected (demo/local mode)
+ * - `"demo"` — placeholder / no real calls (works without keys)
+ * - `"openai"` — first-party OpenAI (api.openai.com)
+ * - `"openai-compatible"` — any OpenAI-compatible endpoint
+ * - `"anthropic"` — Anthropic Claude API
+ * - `"gemini"` — Google Gemini API
+ * - `"ollama"` — local Ollama instance (no API key required)
+ * - `"custom"` — arbitrary base URL
+ */
+export type LlmProviderChoice =
+  | "none"
+  | "demo"
+  | "openai"
+  | "openai-compatible"
+  | "anthropic"
+  | "gemini"
+  | "ollama"
+  | "custom";
 
 /**
- * Non-secret runtime config contract (config.json, schemaVersion 1). Mirrors
+ * Assistant personality mode. Controls the tone and density of responses.
+ */
+export type PersonalityMode = "calm" | "lively" | "minimal" | "custom";
+
+/**
+ * Interface profile. Controls layout density, input modes, and which UI
+ * elements are visible.
+ */
+export type InterfaceProfile = "desktop" | "kiosk" | "mirror" | "mobile";
+
+/**
+ * Per-module enable/disable toggles. Each module can be independently toggled
+ * without affecting provider keys. A disabled module is hidden from the UI
+ * and its provider adapter (if any) is not initialized.
+ */
+export interface ModuleToggles {
+  weather: boolean;
+  news: boolean;
+  map: boolean;
+  calendar: boolean;
+  emailSummary: boolean;
+  browser: boolean;
+  systemStatus: boolean;
+  /** Placeholder — not implemented in v0.1. */
+  cameraPreview: boolean;
+  /** Placeholder — not implemented in v0.1. */
+  iotHome: boolean;
+  /** Placeholder — not implemented in v0.1. */
+  webhookActions: boolean;
+  /** Placeholder — optional AetherCore bridge. */
+  aetherCoreBridge: boolean;
+}
+
+/**
+ * Non-secret runtime config contract (config.json, schemaVersion 2). Mirrors
  * the shape produced by the setup wizard. Secrets never live here.
+ *
+ * Schema version history:
+ *   - v1: initial foundation (assistantName, providers, runtime)
+ *   - v2: assistant identity (wakeWord, personalityMode, orbVisible),
+ *         expanded LLM providers, interfaceProfile, modules toggles
  */
 export interface AethosMirrorConfig {
   schemaVersion: number;
   assistantName: string;
+  /**
+   * Optional wake word for voice activation. Empty string or undefined
+   * means wake-word detection is disabled (not implemented in v0.1).
+   */
+  wakeWord: string;
+  /** Assistant personality mode. Default: `"calm"`. */
+  personalityMode: PersonalityMode;
+  /** Whether the orb is visible in the UI. Default: `true`. */
+  orbVisible: boolean;
+  /** Interface profile controlling layout density. Default: `"desktop"`. */
+  interfaceProfile: InterfaceProfile;
   weatherLocation: string;
   runtime: {
     mode: string;
     apiHost: string;
     apiPort: number;
   };
+  /** Per-module enable/disable toggles. */
+  modules: ModuleToggles;
   providers: {
     openWeather: { enabled: boolean };
     newsApi: { enabled: boolean };
@@ -270,15 +341,37 @@ function deriveOne(
     case "llm": {
       enabled = p.llm.enabled;
       missingMessage = "missing model/base URL/API key";
-      const isOpenAiCompatible = p.llm.provider === "openai-compatible";
-      // Secret only required for openai-compatible providers (local Ollama
-      // typically needs none).
-      requiredSecretKeys = isOpenAiCompatible ? ["LLM_API_KEY"] : [];
-      configFieldsPresent =
-        p.llm.provider !== "none" &&
-        hasText(p.llm.provider) &&
-        hasText(p.llm.baseUrl) &&
-        hasText(p.llm.model);
+      const provider = p.llm.provider;
+      // Secret requirements depend on provider:
+      // - ollama / demo / none: no key needed
+      // - openai / openai-compatible / custom: LLM_API_KEY
+      // - anthropic: ANTHROPIC_API_KEY
+      // - gemini: GEMINI_API_KEY
+      const needsKey =
+        provider === "openai" ||
+        provider === "openai-compatible" ||
+        provider === "custom";
+      const isAnthropicKey = provider === "anthropic";
+      const isGeminiKey = provider === "gemini";
+      if (isAnthropicKey) {
+        requiredSecretKeys = ["ANTHROPIC_API_KEY"];
+      } else if (isGeminiKey) {
+        requiredSecretKeys = ["GEMINI_API_KEY"];
+      } else if (needsKey) {
+        requiredSecretKeys = ["LLM_API_KEY"];
+      } else {
+        requiredSecretKeys = [];
+      }
+      // demo and none don't require base URL or model
+      if (provider === "demo" || provider === "none") {
+        configFieldsPresent = true;
+      } else {
+        configFieldsPresent =
+          provider !== "none" &&
+          hasText(provider) &&
+          hasText(p.llm.baseUrl) &&
+          hasText(p.llm.model);
+      }
       break;
     }
     case "libreChat":

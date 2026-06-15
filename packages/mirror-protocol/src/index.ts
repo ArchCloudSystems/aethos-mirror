@@ -50,7 +50,10 @@ export {
 export type {
   AethosMirrorConfig,
   ConfigSource,
+  InterfaceProfile,
   LlmProviderChoice,
+  ModuleToggles,
+  PersonalityMode,
   ProviderCategory,
   ProviderEvalContext,
   ProviderId,
