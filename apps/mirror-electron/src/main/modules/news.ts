@@ -1,4 +1,5 @@
 import type { NewsFeed, NewsHeadline } from "@aethos/mirror-protocol";
+import { getSecret, hasSecret, configValueOr, getConfig } from "../config-adapter";
 
 /**
  * Read-only news adapter for Mirror.
@@ -6,20 +7,15 @@ import type { NewsFeed, NewsHeadline } from "@aethos/mirror-protocol";
  * Fetches top headlines from NewsAPI when configured, otherwise returns a
  * clearly-marked fallback placeholder feed. The adapter NEVER throws and
  * NEVER includes secrets (API keys) in its return value or logs.
+ *
+ * Configuration is read from the unified config adapter (config.json +
+ * secrets.env + .env.local + process.env) so adapter behavior and reported
+ * status can never drift apart.
  */
 
 const DEFAULT_PROVIDER = "newsapi";
 const FETCH_TIMEOUT_MS = 5000;
 const MAX_HEADLINES = 5;
-
-function readString(key: string): string | undefined {
-  const value = process.env[key];
-  if (value === undefined) {
-    return undefined;
-  }
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : undefined;
-}
 
 function placeholderHeadlines(): NewsHeadline[] {
   return [
@@ -46,28 +42,34 @@ function buildFallback(provider: string): NewsFeed {
  * fallback placeholder feed rather than rejecting.
  */
 export async function getNewsFeed(): Promise<NewsFeed> {
-  const provider = readString("NEWS_PROVIDER") ?? DEFAULT_PROVIDER;
-  const apiKey = readString("NEWS_API_KEY");
+  const config = getConfig();
+  const provider = configValueOr("NEWS_PROVIDER", DEFAULT_PROVIDER);
 
-  // Only NewsAPI is supported initially; anything else falls back.
-  if (!apiKey || provider !== DEFAULT_PROVIDER) {
+  // Not configured: module disabled, provider disabled, or missing key.
+  if (
+    !config.modules.news ||
+    !config.providers.newsApi.enabled ||
+    !hasSecret("NEWS_API_KEY") ||
+    provider !== DEFAULT_PROVIDER
+  ) {
     return buildFallback(provider);
   }
 
-  const country = readString("NEWS_COUNTRY") ?? "us";
-  const category = readString("NEWS_CATEGORY");
-  const query = readString("NEWS_QUERY");
+  const apiKey = getSecret("NEWS_API_KEY");
+  const country = configValueOr("NEWS_COUNTRY", "us");
+  const category = getSecret("NEWS_CATEGORY");
+  const query = getSecret("NEWS_QUERY");
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
   try {
     const url = new URL("https://newsapi.org/v2/top-headlines");
-    if (query) {
+    if (query.length > 0) {
       url.searchParams.set("q", query);
     } else {
       url.searchParams.set("country", country);
-      if (category) {
+      if (category.length > 0) {
         url.searchParams.set("category", category);
       }
     }

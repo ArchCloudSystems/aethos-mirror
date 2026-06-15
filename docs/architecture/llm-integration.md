@@ -2,15 +2,53 @@
 
 Aethos Mirror ships a small, **BYOK** LLM integration backend. It runs in the
 Electron main process, reads the public config contract, and exposes two
-secret-free local endpoints. v0.1.0 supports two provider shapes:
+secret-free local endpoints.
 
-| Provider | Endpoint called | API key |
-|----------|-----------------|---------|
-| `ollama` | `POST <baseUrl>/api/chat` | none by default |
-| `openai-compatible` | `POST <baseUrl>/chat/completions` | `Bearer <LLM_API_KEY>` when set |
+## Provider Status
+
+| Provider | Status | Endpoint | API key |
+|----------|--------|----------|---------|
+| `ollama` | **Implemented** | `POST <baseUrl>/api/chat` | none by default |
+| `openai-compatible` | **Implemented** | `POST <baseUrl>/chat/completions` | `Bearer <LLM_API_KEY>` when set |
+| `openai` | Planned | — | required |
+| `anthropic` | Planned | — | required |
+| `gemini` | Planned | — | required |
+| `custom` | Planned | — | required |
+| `none` / `demo` | N/A | — | — |
+
+**Implemented** means a backend adapter exists and chat requests work.
+**Planned** means the provider is selectable in the setup wizard (so you can
+pre-configure keys), but chat requests return a clear
+`errorCode: "planned_provider"` until the adapter ships.
 
 The backend never calls a hosted provider unless you configure one. Nothing is
 pre-provisioned.
+
+---
+
+## Adapter Interface
+
+Each implemented provider is a clean adapter struct:
+
+```typescript
+interface LlmAdapter {
+  id: LlmProvider;
+  displayName: string;
+  implemented: true;
+  requiresApiKey: boolean;
+  chat(params: {
+    baseUrl: string;
+    model: string;
+    apiKey: string;
+    messages: ChatMessage[];
+    signal: AbortSignal;
+  }): Promise<{ ok: true; reply: string } | { ok: false; error: string }>;
+}
+```
+
+Adding a new provider means implementing this interface and registering it in
+the `IMPLEMENTED_ADAPTERS` map in `modules/llm.ts`. No other files need to
+change.
 
 ---
 
@@ -35,7 +73,7 @@ The LLM block comes from the local config contract (see
 LLM_API_KEY=
 ```
 
-- `provider` — `none`, `ollama`, or `openai-compatible`.
+- `provider` — `none`, `demo`, `ollama`, `openai-compatible`, or a planned id.
 - `baseUrl` — the provider root. Local Ollama default is
   `http://127.0.0.1:11434`.
 - `model` — the model name passed to the provider.
@@ -44,8 +82,9 @@ LLM_API_KEY=
   `Authorization: Bearer` header for the `openai-compatible` provider, and only
   when non-empty. Local Ollama needs no key.
 
-The LLM counts as **configured** only when it is enabled and `provider`,
-`baseUrl`, and `model` are all present (a supported provider).
+The LLM counts as **configured** only when it is enabled, the provider is
+**implemented**, and `provider`, `baseUrl`, and `model` are all present.
+A planned provider is never considered "configured" even if all fields are set.
 
 Run `pnpm setup` to fill these in, or `pnpm providers:check` to see the LLM
 readiness line.
@@ -58,7 +97,9 @@ Both bind to the local API server on `127.0.0.1` (default port `3055`).
 
 ### `GET /llm/status`
 
-Returns secret-free readiness. The API key is never included.
+Returns secret-free readiness. The API key is never included. The `implemented`
+field reports whether the backend can actually run chat for the selected
+provider.
 
 ```bash
 curl -s http://127.0.0.1:3055/llm/status
@@ -70,11 +111,30 @@ curl -s http://127.0.0.1:3055/llm/status
   "llm": {
     "enabled": true,
     "provider": "ollama",
+    "implemented": true,
     "baseUrlConfigured": true,
     "model": "llama3",
     "configured": true,
     "missingFields": [],
     "configSource": "config.json"
+  }
+}
+```
+
+For a planned provider:
+
+```json
+{
+  "ok": true,
+  "llm": {
+    "enabled": true,
+    "provider": "anthropic",
+    "implemented": false,
+    "baseUrlConfigured": true,
+    "model": "claude-sonnet-4-20250514",
+    "configured": false,
+    "missingFields": [],
+    "configSource": "secrets.env"
   }
 }
 ```
@@ -111,16 +171,15 @@ Success response:
 }
 ```
 
-When the LLM is not configured, the request is invalid, the provider errors, or
-the request times out, the endpoint returns a safe, secret-free error (HTTP
-400):
+Error responses (HTTP 400):
 
-```json
-{ "ok": false, "error": "LLM is not configured", "errorCode": "not_configured" }
-```
-
-`errorCode` is one of `not_configured`, `invalid_request`, `provider_error`, or
-`timeout`.
+| `errorCode` | Meaning |
+|-------------|---------|
+| `not_configured` | Provider disabled, demo/none mode, or missing fields |
+| `planned_provider` | Provider is selectable but adapter not yet implemented |
+| `invalid_request` | Missing or invalid `message` field |
+| `provider_error` | The provider returned an error or empty response |
+| `timeout` | Provider did not respond within the timeout |
 
 ---
 

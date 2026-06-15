@@ -60,3 +60,18 @@ export type {
   ProviderReadiness,
   SetupStatus
 } from "./provider-registry.js";
+
+// Module registry — runtime values (definitions + derivation function).
+export {
+  MODULE_DEFINITIONS,
+  deriveModuleRegistry
+} from "./module-registry.js";
+
+// Module registry — types.
+export type {
+  ModuleCategory,
+  ModuleDefinition,
+  ModuleImplStatus,
+  ModuleRegistryContext,
+  ModuleRegistryEntry
+} from "./module-registry.js";

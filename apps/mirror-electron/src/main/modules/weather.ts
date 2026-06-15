@@ -1,4 +1,5 @@
 import type { WeatherReading } from "@aethos/mirror-protocol";
+import { getSecret, hasSecret, configValueOr, getConfig } from "../config-adapter";
 
 /**
  * Read-only weather adapter for Mirror.
@@ -6,24 +7,19 @@ import type { WeatherReading } from "@aethos/mirror-protocol";
  * Fetches current conditions from OpenWeatherMap when configured, otherwise
  * returns a clearly-marked fallback placeholder. The adapter NEVER throws and
  * NEVER includes secrets (API keys) in its return value or logs.
+ *
+ * Configuration is read from the unified config adapter (config.json +
+ * secrets.env + .env.local + process.env) so adapter behavior and reported
+ * status can never drift apart.
  */
 
 const DEFAULT_PROVIDER = "openweathermap";
 const DEFAULT_UNITS = "imperial";
 const FETCH_TIMEOUT_MS = 5000;
 
-function readString(key: string): string | undefined {
-  const value = process.env[key];
-  if (value === undefined) {
-    return undefined;
-  }
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : undefined;
-}
-
 function readNumber(key: string): number | null {
-  const raw = readString(key);
-  if (raw === undefined) {
+  const raw = getSecret(key);
+  if (raw.length === 0) {
     return null;
   }
   const parsed = Number(raw);
@@ -55,17 +51,24 @@ function buildFallback(
  * returns a fallback placeholder rather than rejecting.
  */
 export async function getWeatherReading(): Promise<WeatherReading> {
-  const provider = readString("WEATHER_PROVIDER") ?? DEFAULT_PROVIDER;
-  const units = readString("WEATHER_UNITS") ?? DEFAULT_UNITS;
-  const location = readString("AETHOS_MIRROR_DEFAULT_LOCATION") ?? "";
+  const config = getConfig();
+  const provider = configValueOr("WEATHER_PROVIDER", DEFAULT_PROVIDER);
+  const units = configValueOr("WEATHER_UNITS", DEFAULT_UNITS);
+  const location = config.weatherLocation || "";
   const latitude = readNumber("AETHOS_MIRROR_DEFAULT_LAT");
   const longitude = readNumber("AETHOS_MIRROR_DEFAULT_LON");
-  const apiKey = readString("OPENWEATHER_API_KEY");
 
-  // Not configured: return placeholder without touching the network.
-  if (!apiKey || provider !== DEFAULT_PROVIDER) {
+  // Not configured: module disabled, provider disabled, or missing key.
+  if (
+    !config.modules.weather ||
+    !config.providers.openWeather.enabled ||
+    !hasSecret("OPENWEATHER_API_KEY") ||
+    provider !== DEFAULT_PROVIDER
+  ) {
     return buildFallback(provider, location, units, latitude, longitude);
   }
+
+  const apiKey = getSecret("OPENWEATHER_API_KEY");
 
   if (latitude === null || longitude === null) {
     return buildFallback(provider, location, units, latitude, longitude);

@@ -3,7 +3,7 @@ import type {
   CommandResult,
   CommandResultSection
 } from "@aethos/mirror-protocol";
-import { getMirrorModulesStatus } from "../config";
+import { getMirrorModulesStatus } from "../config-adapter";
 import { getVoiceStatus } from "./elevenlabs";
 import { getCalendarFeed } from "./google";
 import { getEmailSummary } from "./google";

@@ -189,6 +189,50 @@
   word-break: break-word;
 }
 
+.integration-card__category {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-text-subtle);
+  opacity: 0.7;
+}
+
+.integration-card__desc {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: var(--color-text-subtle);
+}
+
+.integration-card__privacy-toggle {
+  background: none;
+  border: none;
+  color: var(--color-accent-sky);
+  cursor: pointer;
+  font-size: 0.72rem;
+  padding: 0;
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  opacity: 0.8;
+  transition: opacity 0.15s;
+}
+
+.integration-card__privacy-toggle:hover {
+  opacity: 1;
+}
+
+.integration-card__privacy {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--color-text-subtle);
+  padding: 8px 12px;
+  background: rgba(15, 23, 42, 0.35);
+  border-radius: 8px;
+  border-left: 2px solid var(--color-accent-sky);
+}
+
 /* Status pills */
 .integration-pill {
   display: inline-flex;
@@ -218,6 +262,12 @@
   color: var(--color-text-subtle);
   border-color: var(--color-border);
   background: rgba(148, 163, 184, 0.08);
+}
+
+.integration-pill--planned {
+  color: #fbbf24;
+  border-color: rgba(251, 191, 36, 0.4);
+  background: rgba(251, 191, 36, 0.1);
 }
 
 /* First-run panel */
@@ -377,3 +427,27 @@
   border-color: var(--color-accent);
   color: var(--color-accent);
 }
+
+/* Module toggle rows */
+.integration-toggles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+}
+
+.integration-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+}
+
+.integration-toggle-row__name {
+  font-size: 0.85rem;
+  color: var(--color-text-primary);
+}
+

@@ -236,8 +236,9 @@ The `pnpm setup` command walks you through the full configuration:
 3. **Module toggles** — weather, news, map, calendar, email summary, browser,
    system status, plus placeholders for camera preview, IoT/home automation,
    webhook actions, and an optional assistant bridge.
-4. **LLM provider** — `none` / `demo` (no keys needed), `openai`,
-   `openai-compatible`, `anthropic`, `gemini`, `ollama` (local), or `custom`.
+4. **LLM provider** — `none` / `demo` (no keys needed), `ollama` (local),
+   `openai-compatible` (implemented now); `openai`, `anthropic`, `gemini`,
+   `custom` (planned — selectable but adapter not yet built).
 5. **Service providers** — OpenWeather, NewsAPI, Telegram, ElevenLabs, Google
    Calendar/Gmail (read-only), LibreChat, Assistant Bridge.
 

@@ -421,3 +421,59 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ── Interface profile modifiers ──────────────────────────────────────── */
+
+/* Desktop: default styles above apply as-is. */
+
+/* Kiosk: larger type, more breathing room for touch / distance. */
+.mirror-shell-v1--kiosk {
+  padding: clamp(1.5rem, 3vw, 3.5rem);
+}
+
+.mirror-shell-v1--kiosk .mirror-stage-v1__product {
+  font-size: clamp(2.8rem, 6vw, 5rem);
+}
+
+.mirror-shell-v1--kiosk .assistant-orb__name {
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+}
+
+/* Mirror: ultra-minimal, orb-dominant, thin status, high contrast. */
+.mirror-shell-v1--mirror {
+  padding: clamp(0.5rem, 1.5vw, 1.5rem);
+}
+
+.mirror-shell-v1--mirror .mirror-shell-v1__inner {
+  grid-template-columns: minmax(160px, 14vw) 1fr;
+}
+
+.mirror-shell-v1--mirror .mirror-stage-v1__product {
+  font-size: clamp(2.6rem, 5.5vw, 4.5rem);
+  font-weight: 100;
+}
+
+.mirror-shell-v1--mirror .system-status {
+  padding: clamp(0.7rem, 1vw, 1rem);
+}
+
+/* Mobile: stacked, compact, touch-friendly. */
+.mirror-shell-v1--mobile .mirror-shell-v1__inner {
+  grid-template-columns: 1fr;
+  grid-template-rows: auto auto auto;
+  grid-template-areas:
+    "stage"
+    "status"
+    "widgets";
+}
+
+.mirror-shell-v1--mobile .mirror-stage-v1__product {
+  font-size: clamp(1.6rem, 8vw, 2.4rem);
+}
+
+.mirror-shell-v1--mobile .system-status__list {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+}
+

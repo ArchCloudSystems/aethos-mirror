@@ -4,7 +4,7 @@ import type {
   TelegramStatus
 } from "@aethos/mirror-protocol";
 import TelegramBot from "node-telegram-bot-api";
-import { getTelegramProviderConfig } from "../config";
+import { getTelegramProviderConfig } from "../config-adapter";
 
 /**
  * Telegram skeleton adapter for Mirror.

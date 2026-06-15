@@ -1,14 +1,16 @@
-import { Component, useState, useEffect } from "react";
+import { Component, useState } from "react";
 import type { ErrorInfo, ReactNode } from "react";
-import type { MirrorMode, MirrorState } from "@aethos/mirror-protocol";
 import { IntegrationsPanel } from "./components/IntegrationsPanel";
 import { BrowserControls } from "./components/BrowserControls";
 import { MirrorShell } from "./shell/MirrorShell";
+import { useMirrorApi } from "./hooks/useMirrorApi";
+import { usePublicConfig } from "./hooks/usePublicConfig";
+import type { PublicConfig } from "./hooks/usePublicConfig";
 import "./global.css";
 
-// ─────────────────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
 // Error Boundary — keeps a runtime error inside the tree from blanking the app
-// ───────────────────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -84,75 +86,15 @@ export class MirrorErrorBoundary extends Component<
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────────────────
-// Mirror API Hook - Inlined for renderer-only operation
-// ───────────────────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Mode Components — config-aware wrappers over the existing components
+// ─────────────────────────────────────────────────────────────────────────────
 
-const DEFAULT_PORT = 3055;
-
-function useMirrorApi(port = DEFAULT_PORT) {
-  const [state, setState] = useState<MirrorState | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const baseUrl = `http://127.0.0.1:${port}`;
-
-  useEffect(() => {
-    fetchState();
-    // Poll state every 5 seconds
-    const interval = setInterval(fetchState, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
-  async function fetchState() {
-    try {
-      const res = await fetch(`${baseUrl}/state`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      setState(data);
-      setError(null);
-    } catch (e) {
-      if (!state) {
-        setError("API not reachable. Ensure Aethos Mirror is running.");
-      }
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function setMode(mode: MirrorMode): Promise<boolean> {
-    try {
-      const res = await fetch(`${baseUrl}/mode`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode }),
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      await fetchState();
-      return true;
-    } catch (e) {
-      setError("Failed to change mode");
-      return false;
-    }
-  }
-
-  return {
-    state,
-    loading,
-    error,
-    setMode,
-  };
-}
-
-// ─────────────────────────────────────────────────────────────────────────────────────────
-// Mode Components
-// ─────────────────────────────────────────────────────────────────────────────────────────
-
-function LandingMode(): JSX.Element {
+function LandingMode({ publicConfig }: { publicConfig: PublicConfig }): JSX.Element {
   // The public Aethos Mirror app shell (v0.1). All live data is fetched inside
   // MirrorShell via the local module API; unconfigured zones show honest
-  // placeholders.
-  return <MirrorShell />;
+  // placeholders. The shell reads the public config for identity & layout.
+  return <MirrorShell publicConfig={publicConfig} />;
 }
 
 function BriefingMode(): JSX.Element {
@@ -175,7 +117,7 @@ function BriefingMode(): JSX.Element {
 
         <div className="briefing-grid">
           <div className="weather">
-            <h3>Wee ther</h3>
+            <h3>Weather</h3>
             <div className="weather-main">
               <span className="temp">72°</span>
               <span className="cond">Clear</span>
@@ -184,7 +126,7 @@ function BriefingMode(): JSX.Element {
           </div>
 
           <div className="calendar">
-            <h3>Up coming</h3>
+            <h3>Upcoming</h3>
             <ul>
               <li>Team Standup • 10:00 AM</li>
               <li>Client Review • 2:00 PM</li>
@@ -192,7 +134,7 @@ function BriefingMode(): JSX.Element {
             </ul>
           </div>
 
-          <div className=" rss">
+          <div className="rss">
             <h3>Feed</h3>
             <ul>
               <li>GitHub Actions changed their pricing model</li>
@@ -222,7 +164,7 @@ function BrowserMode(): JSX.Element {
   return <BrowserControls />;
 }
 
-function CockpitMode(): JSX.Element {
+function CockpitMode({ assistantName }: { assistantName: string }): JSX.Element {
   return (
     <main className="mirror-shell cockpit">
       <section className="mirror-card">
@@ -244,8 +186,7 @@ function CockpitMode(): JSX.Element {
           <div className="cockpit-panel">
             <h3>Assistants</h3>
             <div className="assistant-buttons">
-              <button className="assistant-btn active">Assistant</button>
-              <button className="assistant-btn">Aethos</button>
+              <button className="assistant-btn active">{assistantName}</button>
               <button className="assistant-btn">Operator</button>
             </div>
           </div>
@@ -322,38 +263,6 @@ function ToolPanelMode(): JSX.Element {
               <button className="tool-item">Reload Renderer</button>
               <button className="tool-item">Toggle Overlay</button>
               <button className="tool-item">Force Re-render</button>
-            </div>
-          </div>
-
-          <div className="tool-category">
-            <h3>Developer</h3>
-            <div className="tool-list">
-              <button className="tool-item">API Explorer</button>
-              <button className="tool-item">State Viewer</button>
-              <button className="tool-item">Console Log</button>
-              <button className="tool-item">Profiler</button>
-            </div>
-          </div>
-
-          <div className="tool-category">
-            <h3>System Status</h3>
-            <div className="status-list">
-              <div className="status-row">
-                <span>CPU</span>
-                <span className="badge success">Low</span>
-              </div>
-              <div className="status-row">
-                <span>Memory</span>
-                <span className="badge warning">Medium</span>
-              </div>
-              <div className="status-row">
-                <span>API</span>
-                <span className="badge success">Online</span>
-              </div>
-              <div className="status-row">
-                <span>Overlay</span>
-                <span className="badge success">Active</span>
-              </div>
             </div>
           </div>
         </div>
@@ -459,12 +368,13 @@ function ErrorMode({ error }: { error: string }): JSX.Element {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────────────────
-// Main App Component
-// ─────────────────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Main App Component — uses shared hooks, no duplicated API logic
+// ─────────────────────────────────────────────────────────────────────────────
 
 function MirrorRendererInner(): JSX.Element {
   const { state, loading, error } = useMirrorApi();
+  const { config: publicConfig } = usePublicConfig();
   const [integrationsOpen, setIntegrationsOpen] = useState(false);
 
   if (loading) {
@@ -483,27 +393,44 @@ function MirrorRendererInner(): JSX.Element {
 
   const currentMode = state?.mode || "landing";
 
-  const modeComponents: Record<string, () => JSX.Element> = {
-    landing: LandingMode,
-    briefing: BriefingMode,
-    browser: BrowserMode,
-    cockpit: CockpitMode,
-    tool_panel: ToolPanelMode,
-    voice_only: VoiceOnlyMode,
-    sleep: SleepMode,
-  };
+  // Browser mode is gated by the module toggle — if disabled, fall through to
+  // landing so the user never sees a broken/inaccessible browser pane.
+  const effectiveMode =
+    currentMode === "browser" && !publicConfig.modules.browser
+      ? "landing"
+      : currentMode;
 
-  if (currentMode === "error") {
+  if (effectiveMode === "error") {
     return <ErrorMode error="Mirror entered error mode" />;
   }
 
-  const ModeComponent = modeComponents[currentMode] || LandingMode;
+  /** Resolve the component for the current mode. */
+  function renderMode(): JSX.Element {
+    switch (effectiveMode) {
+      case "landing":
+        return <LandingMode publicConfig={publicConfig} />;
+      case "briefing":
+        return <BriefingMode />;
+      case "browser":
+        return <BrowserMode />;
+      case "cockpit":
+        return <CockpitMode assistantName={publicConfig.assistantName} />;
+      case "tool_panel":
+        return <ToolPanelMode />;
+      case "voice_only":
+        return <VoiceOnlyMode />;
+      case "sleep":
+        return <SleepMode />;
+      default:
+        return <LandingMode publicConfig={publicConfig} />;
+    }
+  }
 
   // The dashboard renders as before. A lightweight launcher overlays the
   // Integrations / Setup panel on top without altering any mode component.
   return (
     <>
-      <ModeComponent />
+      {renderMode()}
       <button
         type="button"
         className="integration-launcher"
@@ -513,7 +440,10 @@ function MirrorRendererInner(): JSX.Element {
         Integrations
       </button>
       {integrationsOpen ? (
-        <IntegrationsPanel onClose={() => setIntegrationsOpen(false)} />
+        <IntegrationsPanel
+          publicConfig={publicConfig}
+          onClose={() => setIntegrationsOpen(false)}
+        />
       ) : null}
     </>
   );

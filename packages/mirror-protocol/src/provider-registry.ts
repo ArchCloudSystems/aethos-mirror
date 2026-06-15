@@ -340,8 +340,15 @@ function deriveOne(
       break;
     case "llm": {
       enabled = p.llm.enabled;
-      missingMessage = "missing model/base URL/API key";
       const provider = p.llm.provider;
+
+      // Providers with implemented backend adapters:
+      const IMPLEMENTED_LLM: ReadonlySet<string> = new Set([
+        "ollama",
+        "openai-compatible"
+      ]);
+      const isImplemented = IMPLEMENTED_LLM.has(provider);
+
       // Secret requirements depend on provider:
       // - ollama / demo / none: no key needed
       // - openai / openai-compatible / custom: LLM_API_KEY
@@ -371,6 +378,12 @@ function deriveOne(
           hasText(provider) &&
           hasText(p.llm.baseUrl) &&
           hasText(p.llm.model);
+      }
+      // Override missing message for planned providers
+      if (enabled && !isImplemented && provider !== "none" && provider !== "demo") {
+        missingMessage = `planned adapter (${provider})`;
+      } else {
+        missingMessage = "missing model/base URL/API key";
       }
       break;
     }

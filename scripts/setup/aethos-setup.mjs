@@ -345,8 +345,9 @@ async function run() {
   // --- LLM -----------------------------------------------------------------
   if (interactive) {
     console.log("\n── LLM provider ───────────────────────────────────────────");
-    console.log("Providers: none, demo (no keys), openai, openai-compatible,");
-    console.log("           anthropic, gemini, ollama (local), custom\n");
+    console.log("Implemented now:  ollama (local), openai-compatible");
+    console.log("Planned adapters: openai, anthropic, gemini, custom");
+    console.log("Other:            none, demo (no keys needed)\n");
   }
   config.providers.llm.enabled = await prompter.askBool(
     "Enable LLM integration?",
@@ -362,6 +363,14 @@ async function run() {
     );
 
     const provider = config.providers.llm.provider;
+
+    // Warn the user if they selected a planned (not yet implemented) provider.
+    const PLANNED_SET = new Set(["openai", "anthropic", "gemini", "custom"]);
+    if (PLANNED_SET.has(provider) && interactive) {
+      console.log(`\n  ⚠ The "${provider}" adapter is planned but not yet implemented.`);
+      console.log("    The backend currently supports: ollama, openai-compatible.");
+      console.log("    You can still configure it now; it will activate when the adapter ships.\n");
+    }
 
     // Smart base URL default per provider
     const defaultBaseUrl =

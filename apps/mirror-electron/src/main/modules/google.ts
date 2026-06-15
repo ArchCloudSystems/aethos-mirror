@@ -5,7 +5,7 @@ import type {
   EmailSummary
 } from "@aethos/mirror-protocol";
 import { google } from "googleapis";
-import { getGoogleProviderConfig } from "../config";
+import { getGoogleProviderConfig } from "../config-adapter";
 
 /** OAuth2 client type derived from googleapis (avoids a direct dep import). */
 type OAuth2Client = InstanceType<typeof google.auth.OAuth2>;

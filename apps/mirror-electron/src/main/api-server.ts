@@ -1,6 +1,6 @@
 import http from "node:http";
 import type { MirrorMode } from "@aethos/mirror-protocol";
-import { getMirrorConfigStatus, getMirrorModulesStatus } from "./config";
+import { getConfig, getMirrorConfigStatus, getMirrorModulesStatus, getModuleRegistry } from "./config-adapter";
 import {
   browserGoBack,
   browserGoForward,
@@ -127,6 +127,46 @@ export function startApiServer(port: number): http.Server {
         return;
       }
 
+      if (method === "GET" && url.pathname === "/config/public") {
+        // Full non-secret config contract. Contains assistant identity,
+        // module toggles, interface profile, provider enabled flags, and
+        // the derived module registry. No secret values (keys/tokens).
+        const cfg = getConfig();
+        sendJson(res, 200, {
+          ok: true,
+          config: {
+            assistantName: cfg.assistantName,
+            wakeWord: cfg.wakeWord,
+            personalityMode: cfg.personalityMode,
+            orbVisible: cfg.orbVisible,
+            interfaceProfile: cfg.interfaceProfile,
+            weatherLocation: cfg.weatherLocation,
+            runtime: cfg.runtime,
+            modules: cfg.modules,
+            moduleRegistry: getModuleRegistry(),
+            providers: {
+              openWeather: { enabled: cfg.providers.openWeather.enabled },
+              newsApi: { enabled: cfg.providers.newsApi.enabled },
+              telegram: { enabled: cfg.providers.telegram.enabled },
+              elevenLabs: { enabled: cfg.providers.elevenLabs.enabled },
+              google: {
+                enabled: cfg.providers.google.enabled,
+                calendarEnabled: cfg.providers.google.calendarEnabled,
+                gmailEnabled: cfg.providers.google.gmailEnabled
+              },
+              llm: {
+                enabled: cfg.providers.llm.enabled,
+                provider: cfg.providers.llm.provider,
+                model: cfg.providers.llm.model
+              },
+              libreChat: { enabled: cfg.providers.libreChat.enabled },
+              assistantBridge: { enabled: cfg.providers.assistantBridge.enabled }
+            }
+          }
+        });
+        return;
+      }
+
       if (method === "GET" && url.pathname === "/config/status") {
         // Sanitized status only — never exposes raw keys or tokens.
         sendJson(res, 200, {
@@ -141,6 +181,16 @@ export function startApiServer(port: number): http.Server {
         sendJson(res, 200, {
           ok: true,
           modules: getMirrorModulesStatus()
+        });
+        return;
+      }
+
+      if (method === "GET" && url.pathname === "/modules/registry") {
+        // Full module registry with enabled/configured/implemented status,
+        // descriptions, categories, and privacy notes. No secrets.
+        sendJson(res, 200, {
+          ok: true,
+          modules: getModuleRegistry()
         });
         return;
       }

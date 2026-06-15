@@ -1,25 +1,30 @@
 import { app } from "electron";
 import { startApiServer } from "./api-server";
-import { initMirrorConfig } from "./config";
+import { initConfig, getApiPort, getConfig } from "./config-adapter";
 import { initMirrorState } from "./state";
 import { createMainWindow } from "./window";
 
-// Load + validate `.env.local` / `.env` before anything reads process.env.
-const configStatus = initMirrorConfig();
+// Load config.json + secrets.env + .env.local before anything reads config.
+initConfig();
 
 // Build the initial mirror state AFTER config is loaded so the device id/name
-// reflect any `.env.local` / `.env` values rather than import-time defaults.
+// reflect any config values rather than import-time defaults.
 initMirrorState();
 
-const apiPort = Number(process.env.AETHOS_MIRROR_PORT ?? 3055);
+const apiPort = getApiPort();
 
 let apiServer: ReturnType<typeof startApiServer> | null = null;
 
 app.whenReady().then(() => {
+  const config = getConfig();
   // Sanitized status only — never logs secrets.
   console.log(
-    "[aethos-mirror] Mirror config status:",
-    JSON.stringify(configStatus)
+    "[aethos-mirror] Mirror identity:",
+    JSON.stringify({
+      assistantName: config.assistantName,
+      interfaceProfile: config.interfaceProfile,
+      apiPort
+    })
   );
 
   apiServer = startApiServer(apiPort);

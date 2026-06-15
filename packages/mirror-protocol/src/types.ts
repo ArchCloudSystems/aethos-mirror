@@ -399,10 +399,17 @@ export interface CommandResult {
 }
 
 /**
- * LLM provider choices supported by the v0.1+ backend. `none` means no
- * provider is selected. The real providers are local Ollama, OpenAI-compatible
- * endpoints, Anthropic, Gemini, and arbitrary custom base URLs. `demo` is a
- * no-op placeholder that works without keys.
+ * LLM provider choices available in the setup wizard.
+ *
+ * **Implemented now** (backend adapter exists):
+ *   - `"ollama"` — local Ollama instance (no API key required)
+ *   - `"openai-compatible"` — any OpenAI-compatible chat/completions endpoint
+ *
+ * **Planned** (selectable in wizard but no backend adapter yet):
+ *   - `"openai"` — first-party OpenAI (api.openai.com)
+ *   - `"anthropic"` — Anthropic Claude API
+ *   - `"gemini"` — Google Gemini API
+ *   - `"custom"` — arbitrary base URL
  */
 export type LlmProvider =
   | "ollama"
@@ -421,9 +428,20 @@ export interface LlmStatus {
   enabled: boolean;
   /** Selected provider id, or "none" when unset/disabled. */
   provider: LlmProvider | "none";
+  /**
+   * Whether a backend adapter is actually implemented for the selected
+   * provider. When false, the provider is selectable in the wizard but
+   * chat requests will return a "planned_provider" error.
+   */
+  implemented: boolean;
   /** Whether a non-empty base URL is configured (URL itself omitted). */
   baseUrlConfigured: boolean;
   model: string;
+  /**
+   * True only when the provider is enabled, implemented, and all required
+   * fields are present. A planned (unimplemented) provider is never
+   * "configured" even if keys are present.
+   */
   configured: boolean;
   /** Names of missing config fields, e.g. "provider", "baseUrl", "model". */
   missingFields: string[];

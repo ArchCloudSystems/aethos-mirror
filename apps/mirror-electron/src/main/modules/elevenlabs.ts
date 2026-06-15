@@ -4,6 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import type { VoiceStatus, VoiceTtsResult } from "@aethos/mirror-protocol";
 import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
+import { getSecret, hasSecret, configValueOr, getConfig } from "../config-adapter";
 
 /**
  * ElevenLabs voice skeleton adapter for Mirror.
@@ -12,28 +13,16 @@ import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
  * audio is written to a local temp file and that path is returned (the app has
  * no renderer audio channel yet, so a temp path is the safe handoff). The API
  * key is NEVER returned or logged.
+ *
+ * Configuration is read from the unified config adapter (config.json +
+ * secrets.env + .env.local + process.env) so adapter behavior and reported
+ * status can never drift apart.
  */
 
 const DEFAULT_MODEL_ID = "eleven_multilingual_v2";
 const DEFAULT_OUTPUT_FORMAT = "mp3_44100_128";
 const MIN_TEXT_LENGTH = 1;
 const MAX_TEXT_LENGTH = 5000;
-
-function readString(key: string): string | undefined {
-  const value = process.env[key];
-  if (value === undefined) {
-    return undefined;
-  }
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : undefined;
-}
-
-function isTruthy(value: string | undefined): boolean {
-  if (value === undefined) {
-    return false;
-  }
-  return ["1", "true", "yes", "on"].includes(value.trim().toLowerCase());
-}
 
 /** Map an output format token to a best-effort mime type + file extension. */
 function describeFormat(outputFormat: string): {
@@ -59,18 +48,16 @@ function describeFormat(outputFormat: string): {
  * Report read-only voice module status. Never exposes the API key.
  */
 export function getVoiceStatus(): VoiceStatus {
-  const configured = Boolean(readString("ELEVENLABS_API_KEY"));
-  const assistantEnabled =
-    readString("ASSISTANT_ENABLED") === undefined
-      ? true
-      : isTruthy(readString("ASSISTANT_ENABLED"));
+  const config = getConfig();
+  const configured =
+    config.providers.elevenLabs.enabled && hasSecret("ELEVENLABS_API_KEY");
 
   return {
     configured,
-    enabled: configured && assistantEnabled,
-    voiceConfigured: Boolean(readString("ELEVENLABS_VOICE_ID")),
-    modelId: readString("ELEVENLABS_MODEL_ID") ?? DEFAULT_MODEL_ID,
-    outputFormat: readString("ELEVENLABS_OUTPUT_FORMAT") ?? DEFAULT_OUTPUT_FORMAT
+    enabled: configured,
+    voiceConfigured: hasSecret("ELEVENLABS_VOICE_ID"),
+    modelId: configValueOr("ELEVENLABS_MODEL_ID", DEFAULT_MODEL_ID),
+    outputFormat: configValueOr("ELEVENLABS_OUTPUT_FORMAT", DEFAULT_OUTPUT_FORMAT)
   };
 }
 
@@ -101,16 +88,21 @@ export async function synthesizeSpeech(
     return failure(`Text exceeds ${MAX_TEXT_LENGTH} characters`);
   }
 
-  const apiKey = readString("ELEVENLABS_API_KEY");
-  const voiceId = readString("ELEVENLABS_VOICE_ID");
-  const modelId = readString("ELEVENLABS_MODEL_ID") ?? DEFAULT_MODEL_ID;
-  const outputFormat =
-    readString("ELEVENLABS_OUTPUT_FORMAT") ?? DEFAULT_OUTPUT_FORMAT;
-
-  if (!apiKey) {
+  const config = getConfig();
+  if (!config.providers.elevenLabs.enabled) {
     return failure("Voice is not configured");
   }
-  if (!voiceId) {
+
+  const apiKey = getSecret("ELEVENLABS_API_KEY");
+  const voiceId = getSecret("ELEVENLABS_VOICE_ID");
+  const modelId = configValueOr("ELEVENLABS_MODEL_ID", DEFAULT_MODEL_ID);
+  const outputFormat =
+    configValueOr("ELEVENLABS_OUTPUT_FORMAT", DEFAULT_OUTPUT_FORMAT);
+
+  if (apiKey.length === 0) {
+    return failure("Voice is not configured");
+  }
+  if (voiceId.length === 0) {
     return failure("No voice id configured");
   }
 
