@@ -1,12 +1,12 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import type { AileeModulesStatus, TelegramMode } from "@aethos/mirror-protocol";
+import type { MirrorModulesStatus, TelegramMode } from "@aethos/mirror-protocol";
 import dotenv from "dotenv";
 import { z } from "zod";
 
 /**
- * Ailee environment / config loader.
+ * Mirror environment / config loader.
  *
  * Loads `.env.local` then `.env` from the repo root (or nearest ancestor that
  * contains them), validates the resulting shape with zod, and exposes ONLY a
@@ -177,11 +177,11 @@ function parsePositiveInt(value: string | undefined): number | null {
 }
 
 /**
- * Whether the Ailee runtime master switch is on. Defaults to enabled when the
+ * Whether the Mirror runtime master switch is on. Defaults to enabled when the
  * key is unset. Centralized here so every module derives it identically.
  */
-function isAileeEnabled(env: AileeEnv): boolean {
-  return env.AILEE_ENABLED === undefined ? true : isTruthy(env.AILEE_ENABLED);
+function isAssistantEnabled(env: MirrorEnv): boolean {
+  return env.ASSISTANT_ENABLED === undefined ? true : isTruthy(env.ASSISTANT_ENABLED);
 }
 
 /**
@@ -192,8 +192,8 @@ function isAileeEnabled(env: AileeEnv): boolean {
  */
 const envSchema = z
   .object({
-    // Ailee runtime
-    AILEE_ENABLED: z.string().optional(),
+    // Mirror runtime
+    ASSISTANT_ENABLED: z.string().optional(),
 
     // Mirror device / location
     AETHOS_MIRROR_DEFAULT_LOCATION: z.string().optional(),
@@ -228,40 +228,40 @@ const envSchema = z
     MAP_PROVIDER: z.string().optional(),
     MAP_TILE_URL: z.string().optional(),
 
-    // AetherCore bridge
-    AETHERCORE_BRIDGE_ENABLED: z.string().optional(),
-    AETHERCORE_BASE_URL: z.string().optional(),
-    AETHERCORE_BRIDGE_TOKEN: z.string().optional()
+    // Assistant bridge
+    ASSISTANT_BRIDGE_ENABLED: z.string().optional(),
+    ASSISTANT_BRIDGE_BASE_URL: z.string().optional(),
+    ASSISTANT_BRIDGE_TOKEN: z.string().optional()
   })
   .passthrough();
 
-export type AileeEnv = z.infer<typeof envSchema>;
+export type MirrorEnv = z.infer<typeof envSchema>;
 
 /**
- * Sanitized, secret-free view of which Ailee modules are configured. This is
+ * Sanitized, secret-free view of which Mirror modules are configured. This is
  * the ONLY config-derived data structure that should ever cross a process or
  * network boundary.
  */
-export interface AileeConfigStatus {
+export interface MirrorConfigStatus {
   telegramConfigured: boolean;
   elevenLabsConfigured: boolean;
   googleConfigured: boolean;
   newsConfigured: boolean;
   weatherConfigured: boolean;
   mapConfigured: boolean;
-  aetherCoreBridgeConfigured: boolean;
+  assistantBridgeConfigured: boolean;
 }
 
-let cachedEnv: AileeEnv | null = null;
-let cachedStatus: AileeConfigStatus | null = null;
-let cachedModulesStatus: AileeModulesStatus | null = null;
+let cachedEnv: MirrorEnv | null = null;
+let cachedStatus: MirrorConfigStatus | null = null;
+let cachedModulesStatus: MirrorModulesStatus | null = null;
 
 /**
  * Load + validate the environment exactly once and cache the parsed result.
  * The parsed env is kept private to this module; callers only get the
- * sanitized status via {@link getAileeConfigStatus}.
+ * sanitized status via {@link getMirrorConfigStatus}.
  */
-function loadEnv(): AileeEnv {
+function loadEnv(): MirrorEnv {
   if (cachedEnv) {
     return cachedEnv;
   }
@@ -281,7 +281,7 @@ function loadEnv(): AileeEnv {
         fields.length > 0 ? fields.join(", ") : "unknown fields"
       }`
     );
-    cachedEnv = {} as AileeEnv;
+    cachedEnv = {} as MirrorEnv;
     return cachedEnv;
   }
 
@@ -293,7 +293,7 @@ function loadEnv(): AileeEnv {
  * Compute the sanitized configuration status. A module counts as configured
  * when its required secret(s)/identifier(s) are present and non-empty.
  */
-export function getAileeConfigStatus(): AileeConfigStatus {
+export function getMirrorConfigStatus(): MirrorConfigStatus {
   if (cachedStatus) {
     return cachedStatus;
   }
@@ -312,9 +312,9 @@ export function getAileeConfigStatus(): AileeConfigStatus {
     newsConfigured: isPresent(env.NEWS_API_KEY),
     weatherConfigured: isPresent(env.OPENWEATHER_API_KEY),
     mapConfigured: isPresent(env.MAP_TILE_URL) || isPresent(env.MAP_PROVIDER),
-    aetherCoreBridgeConfigured:
-      isTruthy(env.AETHERCORE_BRIDGE_ENABLED) &&
-      isPresent(env.AETHERCORE_BASE_URL)
+    assistantBridgeConfigured:
+      isTruthy(env.ASSISTANT_BRIDGE_ENABLED) &&
+      isPresent(env.ASSISTANT_BRIDGE_BASE_URL)
   };
 
   return cachedStatus;
@@ -324,7 +324,7 @@ export function getAileeConfigStatus(): AileeConfigStatus {
  * Normalized, secret-bearing Google provider config. This is consumed ONLY by
  * the in-process Google adapter (same process, never serialized across a
  * network boundary). It is derived from the SAME loaded env source as
- * {@link getAileeModulesStatus}, so adapter behavior and reported status can
+ * {@link getMirrorModulesStatus}, so adapter behavior and reported status can
  * never drift apart. `configured` mirrors `googleConfigured`.
  */
 export interface GoogleProviderConfig {
@@ -343,7 +343,7 @@ export interface GoogleProviderConfig {
  */
 export function getGoogleProviderConfig(): GoogleProviderConfig {
   const env = loadEnv();
-  const status = getAileeConfigStatus();
+  const status = getMirrorConfigStatus();
 
   const trimOrNull = (value: string | undefined): string | null => {
     if (value === undefined) {
@@ -367,7 +367,7 @@ export function getGoogleProviderConfig(): GoogleProviderConfig {
 /**
  * Normalized, secret-bearing Telegram provider config. Consumed ONLY by the
  * in-process Telegram adapter. Derived from the SAME loaded env source as
- * {@link getAileeModulesStatus}. Chat ids are kept as STRINGS so large
+ * {@link getMirrorModulesStatus}. Chat ids are kept as STRINGS so large
  * group/supergroup ids are never coerced through a lossy `Number`.
  */
 export interface TelegramProviderConfig {
@@ -375,7 +375,7 @@ export interface TelegramProviderConfig {
   allowedChatIds: string[];
   pollingEnabled: boolean;
   webhookUrl: string | null;
-  aileeEnabled: boolean;
+  assistantEnabled: boolean;
 }
 
 /**
@@ -398,7 +398,7 @@ export function getTelegramProviderConfig(): TelegramProviderConfig {
     allowedChatIds: parseCsvList(env.TELEGRAM_ALLOWED_CHAT_IDS),
     pollingEnabled: isTruthy(env.TELEGRAM_POLLING_ENABLED),
     webhookUrl,
-    aileeEnabled: isAileeEnabled(env)
+    assistantEnabled: isAssistantEnabled(env)
   };
 }
 
@@ -408,20 +408,20 @@ export function getTelegramProviderConfig(): TelegramProviderConfig {
  * it is enabled, and non-sensitive descriptors (provider names, location
  * label, telegram mode). No raw keys or tokens are ever included.
  */
-export function getAileeModulesStatus(): AileeModulesStatus {
+export function getMirrorModulesStatus(): MirrorModulesStatus {
   if (cachedModulesStatus) {
     return cachedModulesStatus;
   }
 
   const env = loadEnv();
-  const status = getAileeConfigStatus();
+  const status = getMirrorConfigStatus();
 
-  // Ailee runtime master switch; defaults to enabled when unset.
-  const aileeEnabled = isAileeEnabled(env);
+  // Mirror runtime master switch; defaults to enabled when unset.
+  const assistantEnabled = isAssistantEnabled(env);
 
   // Telegram mode: only meaningful when configured + enabled.
   let telegramMode: TelegramMode = "disabled";
-  if (status.telegramConfigured && aileeEnabled) {
+  if (status.telegramConfigured && assistantEnabled) {
     if (isTruthy(env.TELEGRAM_POLLING_ENABLED)) {
       telegramMode = "polling";
     } else if (isPresent(env.TELEGRAM_WEBHOOK_URL)) {
@@ -434,12 +434,12 @@ export function getAileeModulesStatus(): AileeModulesStatus {
   cachedModulesStatus = {
     telegram: {
       configured: status.telegramConfigured,
-      enabled: aileeEnabled && status.telegramConfigured,
+      enabled: assistantEnabled && status.telegramConfigured,
       mode: telegramMode
     },
     elevenLabs: {
       configured: status.elevenLabsConfigured,
-      enabled: aileeEnabled && status.elevenLabsConfigured
+      enabled: assistantEnabled && status.elevenLabsConfigured
     },
     google: {
       configured: status.googleConfigured,
@@ -461,9 +461,9 @@ export function getAileeModulesStatus(): AileeModulesStatus {
       configured: status.mapConfigured,
       provider: valueOr(env.MAP_PROVIDER, "openstreetmap")
     },
-    aetherCoreBridge: {
-      configured: status.aetherCoreBridgeConfigured,
-      enabled: isTruthy(env.AETHERCORE_BRIDGE_ENABLED)
+    assistantBridge: {
+      configured: status.assistantBridgeConfigured,
+      enabled: isTruthy(env.ASSISTANT_BRIDGE_ENABLED)
     }
   };
 
@@ -479,12 +479,12 @@ export function getAileeModulesStatus(): AileeModulesStatus {
  * were loaded (e.g. from an early module-import side effect) cannot survive as
  * a stale "false" value — the first authoritative load always wins.
  */
-export function initAileeConfig(): AileeConfigStatus {
+export function initMirrorConfig(): MirrorConfigStatus {
   cachedEnv = null;
   cachedStatus = null;
   cachedModulesStatus = null;
   loadEnv();
-  return getAileeConfigStatus();
+  return getMirrorConfigStatus();
 }
 
 /**
@@ -492,7 +492,7 @@ export function initAileeConfig(): AileeConfigStatus {
  * the key config fields, never raw values. Safe to log. Intended for
  * debugging env-precedence issues without ever leaking secrets.
  */
-export function getAileeConfigDiagnostics(): Record<string, boolean | number> {
+export function getMirrorConfigDiagnostics(): Record<string, boolean | number> {
   const env = loadEnv();
   const lenOf = (value: string | undefined): number =>
     typeof value === "string" ? value.trim().length : 0;
@@ -516,7 +516,7 @@ export function getAileeConfigDiagnostics(): Record<string, boolean | number> {
  * Test/maintenance hook: clears the in-memory caches so the next call
  * re-reads `process.env`. Not used in production flows.
  */
-export function resetAileeConfigCache(): void {
+export function resetMirrorConfigCache(): void {
   cachedEnv = null;
   cachedStatus = null;
   cachedModulesStatus = null;

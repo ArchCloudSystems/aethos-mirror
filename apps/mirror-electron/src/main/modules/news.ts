@@ -1,7 +1,7 @@
 import type { NewsFeed, NewsHeadline } from "@aethos/mirror-protocol";
 
 /**
- * Read-only news adapter for Ailee.
+ * Read-only news adapter for Mirror.
  *
  * Fetches top headlines from NewsAPI when configured, otherwise returns a
  * clearly-marked fallback placeholder feed. The adapter NEVER throws and
@@ -25,7 +25,7 @@ function placeholderHeadlines(): NewsHeadline[] {
   return [
     {
       title: "News feed unavailable",
-      source: "Ailee",
+      source: "Aethos Mirror",
       url: null,
       publishedAt: null
     }

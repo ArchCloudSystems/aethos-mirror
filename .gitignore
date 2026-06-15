@@ -16,3 +16,6 @@ out/
 .vite/
 .electron/
 *.local
+
+# Local generated config + secrets (setup wizard output)
+.local/

@@ -1,8 +1,9 @@
 import { Component, useState, useEffect } from "react";
 import type { ErrorInfo, ReactNode } from "react";
 import type { MirrorMode, MirrorState } from "@aethos/mirror-protocol";
-import { AileeOrb, MirrorModules } from "./components/ModeComponents";
-import { useAileeModules } from "./hooks/useAileeModules";
+import { IntegrationsPanel } from "./components/IntegrationsPanel";
+import { BrowserControls } from "./components/BrowserControls";
+import { MirrorShell } from "./shell/MirrorShell";
 import "./global.css";
 
 // ─────────────────────────────────────────────────────────────────────────────────────────
@@ -52,7 +53,7 @@ export class MirrorErrorBoundary extends Component<
         <main className="mirror-shell error">
           <section className="mirror-card error-card">
             <header className="error-header">
-              <p className="eyebrow">Ailee Mirror</p>
+              <p className="eyebrow">Aethos Mirror</p>
               <h1>Something interrupted the mirror</h1>
             </header>
             <div className="error-content">
@@ -148,40 +149,10 @@ function useMirrorApi(port = DEFAULT_PORT) {
 // ─────────────────────────────────────────────────────────────────────────────────────────
 
 function LandingMode(): JSX.Element {
-  const modules = useAileeModules();
-
-  // Defensive fallbacks: never assume the hook returned a populated object.
-  // Each field already falls back to null inside the hook, but guarding here
-  // keeps a malformed/partial value from throwing inside MirrorModules.
-  const safeModules = modules ?? null;
-  const sendCommand = safeModules?.sendCommand;
-
-  return (
-    <main className="mirror-shell mirror-stage">
-      <MirrorModules
-        data={{
-          weather: safeModules?.weather ?? null,
-          news: safeModules?.news ?? null,
-          calendar: safeModules?.calendar ?? null,
-          emailSummary: safeModules?.emailSummary ?? null,
-        }}
-        lastCommand={safeModules?.lastCommand ?? null}
-        commandPending={safeModules?.commandPending ?? false}
-        onCommand={(command) => {
-          if (typeof sendCommand === "function") {
-            void sendCommand(command);
-          }
-        }}
-      />
-
-      <section className="mirror-stage__center">
-        <p className="eyebrow">Magic mirror display</p>
-        <h1>Ailee Mirror</h1>
-
-        <AileeOrb mode="landing" />
-      </section>
-    </main>
-  );
+  // The public Aethos Mirror app shell (v0.1). All live data is fetched inside
+  // MirrorShell via the local module API; unconfigured zones show honest
+  // placeholders.
+  return <MirrorShell />;
 }
 
 function BriefingMode(): JSX.Element {
@@ -192,6 +163,9 @@ function BriefingMode(): JSX.Element {
           <div>
             <p className="eyebrow">Daily Briefing</p>
             <h1>Good morning</h1>
+            <p className="placeholder-note">
+              Placeholder data — not wired to live providers
+            </p>
           </div>
           <div className="clock">
             <strong>09:42</strong>
@@ -242,63 +216,10 @@ function BriefingMode(): JSX.Element {
 }
 
 function BrowserMode(): JSX.Element {
-  // Note: This uses iframe as Electron renderer cannot embed Chromium directly
-  // In production, use webContents.executeJavaScript for direct DOM manipulation
-  return (
-    <main className="mirror-shell browser">
-      <section className="mirror-card browser-card">
-        <header className="browser-header">
-          <div className="nav-bar">
-            <button className="nav-btn">←</button>
-            <button className="nav-btn">→</button>
-            <button className="nav-btn">↻</button>
-            <div className="url-bar">
-              <span className="protocol">https://</span>
-              <input type="text" value="example.com" readOnly />
-            </div>
-            <div className="search-bar">
-              <input type="text" placeholder="Search the web..." />
-            </div>
-          </div>
-        </header>
-
-        <div className="browser-content">
-          <div className="browser-tabs">
-            <span className="active-tab">Search</span>
-            <span className="tab">History</span>
-            <span className="tab">Bookmarks</span>
-            <span className="tab close-tab">+</span>
-          </div>
-          <div className="browser-body">
-            <div className="search-result">
-              <h4 className="search-title">Aethos Mirror v0.2 Release Notes</h4>
-              <p className="search-snippet">
-                This update introduces native mode switching, improved API integration,
-                and better state management for multi-mode operation...
-              </p>
-              <a href="#" className="search-link">https://github.com/aethos/mirror/releases</a>
-            </div>
-            <div className="search-result">
-              <h4 className="search-title">React 19 Available Now</h4>
-              <p className="search-snippet">
-                The latest version of React brings new features for server components,
-                server actions, and improved performance...
-              </p>
-              <a href="#" className="search-link">https://react.dev</a>
-            </div>
-            <div className="search-result">
-              <h4 className="search-title">TypeScript 5.5 Improvements</h4>
-              <p className="search-snippet">
-                Type-only imports, better exhaustiveness checking, and enhanced
-                JSDoc Support in TypeScript 5.5...
-              </p>
-              <a href="#" className="search-link">https://typescriptlang.org</a>
-            </div>
-          </div>
-        </div>
-      </section>
-    </main>
-  );
+  // The web page renders in a REAL main-process Electron BrowserView (sandboxed,
+  // no Node access, context isolation on). This renderer component owns only
+  // the control strip + truthful status; it never embeds remote content.
+  return <BrowserControls />;
 }
 
 function CockpitMode(): JSX.Element {
@@ -307,8 +228,11 @@ function CockpitMode(): JSX.Element {
       <section className="mirror-card">
         <header className="cockpit-header">
           <div>
-            <p className="eyebrow">AetherCore Cockpit</p>
+            <p className="eyebrow">Assistant Cockpit</p>
             <h1>System Control</h1>
+            <p className="placeholder-note">
+              Placeholder — controls are not implemented
+            </p>
           </div>
           <div className="cockpit-status">
             <span className="status-dot active"></span>
@@ -320,9 +244,9 @@ function CockpitMode(): JSX.Element {
           <div className="cockpit-panel">
             <h3>Assistants</h3>
             <div className="assistant-buttons">
-              <button className="assistant-btn active">Cailean</button>
-              <button className="assistant-btn">Eilidh</button>
-              <button className="assistant-btn">Ailee</button>
+              <button className="assistant-btn active">Assistant</button>
+              <button className="assistant-btn">Aethos</button>
+              <button className="assistant-btn">Operator</button>
             </div>
           </div>
 
@@ -373,8 +297,11 @@ function ToolPanelMode(): JSX.Element {
     <main className="mirror-shell tool-panel">
       <section className="mirror-card">
         <header className="tool-header">
-          <p className="eyebrow">AetherCore Developer Tools</p>
+          <p className="eyebrow">Developer Tools</p>
           <h1>Tool Panel</h1>
+          <p className="placeholder-note">
+            Placeholder — tools are not implemented
+          </p>
         </header>
 
         <div className="tool-grid">
@@ -436,43 +363,38 @@ function ToolPanelMode(): JSX.Element {
 }
 
 function VoiceOnlyMode(): JSX.Element {
+  // Voice in v0.1 is OUTBOUND text-to-speech only (ElevenLabs), and even that
+  // writes to a local temp file rather than auto-playing. There is NO live
+  // microphone capture and NO wake-word detection. This UI must not claim
+  // otherwise.
   return (
     <main className="mirror-shell voice-only">
       <section className="mirror-card voice-card">
         <header className="voice-header">
           <p className="eyebrow">Voice Mode</p>
-          <h1>Listening...</h1>
+          <h1>Text-to-speech only</h1>
         </header>
 
-        <div className="voice-visualizer">
-          <div className="bar active"></div>
-          <div className="bar"></div>
-          <div className="bar"></div>
-          <div className="bar active"></div>
-          <div className="bar"></div>
-          <div className="bar active"></div>
-          <div className="bar"></div>
-          <div className="bar active"></div>
-        </div>
-
         <div className="voice-status">
-          <span className="status-dot pulse"></span>
-          <span>Active Listening</span>
-          <span className="mic-status">Mic: <strong>Enabled</strong></span>
+          <span className="status-dot"></span>
+          <span>Mic capture: not implemented</span>
+          <span className="mic-status">
+            Wake word: <strong>not implemented</strong>
+          </span>
         </div>
 
         <div className="voice-config">
           <div className="config-row">
             <span>Voice Engine</span>
-            <strong>OpenAI TTS</strong>
+            <strong>ElevenLabs (TTS, BYOK)</strong>
           </div>
           <div className="config-row">
-            <span>Wake Word</span>
-            <strong>Cailean</strong>
+            <span>Microphone listening</span>
+            <strong>Not implemented</strong>
           </div>
           <div className="config-row">
-            <span>Default Language</span>
-            <strong>English (US)</strong>
+            <span>Wake word detection</span>
+            <strong>Not implemented</strong>
           </div>
         </div>
       </section>
@@ -489,11 +411,11 @@ function SleepMode(): JSX.Element {
         </div>
         <div className="sleep-text">
           <h1>System Sleeping</h1>
-          <p>Press any key or speak wake word to activate</p>
+          <p>Press any key to activate</p>
         </div>
         <div className="sleep-timer">
-          <strong>Next Wake:</strong>
-          <span>08:00 AM</span>
+          <strong>Status:</strong>
+          <span>Placeholder — scheduled wake not implemented</span>
         </div>
       </section>
     </main>
@@ -522,7 +444,7 @@ function ErrorMode({ error }: { error: string }): JSX.Element {
             <div className="error-info">
               <span>Time: {new Date().toLocaleTimeString()}</span>
               <span>Mode: landing</span>
-              <span>Device: mothership-main-display</span>
+              <span>Device: aethos-mirror</span>
             </div>
           </div>
         </div>
@@ -543,6 +465,7 @@ function ErrorMode({ error }: { error: string }): JSX.Element {
 
 function MirrorRendererInner(): JSX.Element {
   const { state, loading, error } = useMirrorApi();
+  const [integrationsOpen, setIntegrationsOpen] = useState(false);
 
   if (loading) {
     return (
@@ -576,7 +499,24 @@ function MirrorRendererInner(): JSX.Element {
 
   const ModeComponent = modeComponents[currentMode] || LandingMode;
 
-  return <ModeComponent />;
+  // The dashboard renders as before. A lightweight launcher overlays the
+  // Integrations / Setup panel on top without altering any mode component.
+  return (
+    <>
+      <ModeComponent />
+      <button
+        type="button"
+        className="integration-launcher"
+        onClick={() => setIntegrationsOpen(true)}
+        aria-label="Open integrations and setup"
+      >
+        Integrations
+      </button>
+      {integrationsOpen ? (
+        <IntegrationsPanel onClose={() => setIntegrationsOpen(false)} />
+      ) : null}
+    </>
+  );
 }
 
 export function MirrorRenderer(): JSX.Element {

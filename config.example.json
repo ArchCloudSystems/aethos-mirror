@@ -1,0 +1,53 @@
+{
+  "$comment": "Aethos Mirror — example config. Copy to .local/aethos-mirror/config.json or run `pnpm setup`. This file is committed as a reference; the real config is git-ignored.",
+  "schemaVersion": 2,
+  "assistantName": "Aethos",
+  "wakeWord": "",
+  "personalityMode": "calm",
+  "orbVisible": true,
+  "interfaceProfile": "desktop",
+  "weatherLocation": "Your City, ST",
+  "runtime": {
+    "mode": "desktop",
+    "apiHost": "127.0.0.1",
+    "apiPort": 3055
+  },
+  "modules": {
+    "weather": true,
+    "news": true,
+    "map": true,
+    "calendar": true,
+    "emailSummary": true,
+    "browser": false,
+    "systemStatus": true,
+    "cameraPreview": false,
+    "iotHome": false,
+    "webhookActions": false,
+    "aetherCoreBridge": false
+  },
+  "providers": {
+    "openWeather": { "enabled": false },
+    "newsApi": { "enabled": false },
+    "telegram": { "enabled": false },
+    "elevenLabs": { "enabled": false },
+    "google": {
+      "enabled": false,
+      "calendarEnabled": false,
+      "gmailEnabled": false
+    },
+    "llm": {
+      "enabled": false,
+      "provider": "none",
+      "baseUrl": "",
+      "model": ""
+    },
+    "libreChat": {
+      "enabled": false,
+      "baseUrl": ""
+    },
+    "assistantBridge": {
+      "enabled": false,
+      "baseUrl": ""
+    }
+  }
+}

@@ -1,10 +1,15 @@
 import { app } from "electron";
 import { startApiServer } from "./api-server";
-import { initAileeConfig } from "./config";
+import { initMirrorConfig } from "./config";
+import { initMirrorState } from "./state";
 import { createMainWindow } from "./window";
 
 // Load + validate `.env.local` / `.env` before anything reads process.env.
-const configStatus = initAileeConfig();
+const configStatus = initMirrorConfig();
+
+// Build the initial mirror state AFTER config is loaded so the device id/name
+// reflect any `.env.local` / `.env` values rather than import-time defaults.
+initMirrorState();
 
 const apiPort = Number(process.env.AETHOS_MIRROR_PORT ?? 3055);
 
@@ -13,7 +18,7 @@ let apiServer: ReturnType<typeof startApiServer> | null = null;
 app.whenReady().then(() => {
   // Sanitized status only — never logs secrets.
   console.log(
-    "[aethos-mirror] Ailee config status:",
+    "[aethos-mirror] Mirror config status:",
     JSON.stringify(configStatus)
   );
 

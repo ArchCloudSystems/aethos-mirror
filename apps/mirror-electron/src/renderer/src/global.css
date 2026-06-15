@@ -159,6 +159,15 @@ body {
   color: var(--color-text-subtle);
 }
 
+/* Honest "not implemented / placeholder" marker for unwired UI. */
+.placeholder-note {
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  color: var(--color-accent-cyan, #60a5fa);
+  opacity: 0.85;
+  margin-top: 0.35rem;
+}
+
 /* ──────── Glassmorphism Helper ──────── */
 .glass-panel {
   background: rgba(15, 23, 42, 0.6);

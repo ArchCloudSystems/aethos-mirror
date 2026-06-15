@@ -1,0 +1,423 @@
+/* Aethos Mirror — public app shell (v0.1) styles.
+   Dark mirror surface, glass panels, distance-readable, orb-first responsive.
+   Reuses the global design tokens in global.css (--color-*, radii, shadows). */
+
+.mirror-shell-v1 {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  width: 100%;
+  padding: clamp(1rem, 2.5vw, 2.75rem);
+  display: flex;
+}
+
+.mirror-shell-v1__inner {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(220px, 18vw) 1fr;
+  grid-template-rows: 1fr auto;
+  grid-template-areas:
+    "status stage"
+    "status widgets";
+  gap: clamp(1rem, 2vw, 2rem);
+  min-height: calc(100vh - clamp(2rem, 5vw, 5.5rem));
+}
+
+/* ── System status rail ─────────────────────────────────────────────────── */
+
+.system-status {
+  grid-area: status;
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-lg);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: var(--shadow-glass);
+  padding: clamp(1rem, 1.4vw, 1.5rem);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-self: start;
+}
+
+.system-status__heading {
+  font-size: 0.7rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-subtle);
+}
+
+.system-status__list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.system-status__row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.system-status__row-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.system-status__label {
+  font-size: 0.95rem;
+  color: var(--color-text-primary);
+}
+
+.system-status__note {
+  font-size: 0.72rem;
+  color: var(--color-text-subtle);
+  opacity: 0.85;
+}
+
+/* ── Status pills ───────────────────────────────────────────────────────── */
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+.status-pill__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.status-pill--live {
+  color: var(--color-accent);
+  background: rgba(52, 211, 153, 0.1);
+  border-color: rgba(52, 211, 153, 0.3);
+}
+
+.status-pill--local {
+  color: var(--color-accent-sky);
+  background: rgba(56, 189, 248, 0.1);
+  border-color: rgba(56, 189, 248, 0.28);
+}
+
+.status-pill--demo {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.1);
+  border-color: rgba(251, 191, 36, 0.28);
+}
+
+.status-pill--idle {
+  color: var(--color-text-subtle);
+  background: rgba(148, 163, 184, 0.08);
+  border-color: rgba(148, 163, 184, 0.22);
+}
+
+.status-pill--off {
+  color: rgba(148, 163, 184, 0.75);
+  background: rgba(148, 163, 184, 0.06);
+  border-color: rgba(148, 163, 184, 0.18);
+}
+
+.status-pill--off .status-pill__dot {
+  box-shadow: none;
+  opacity: 0.6;
+}
+
+/* ── Central stage + identity ───────────────────────────────────────────── */
+
+.mirror-stage-v1 {
+  grid-area: stage;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: clamp(1.5rem, 3vh, 3rem);
+  padding: clamp(1rem, 3vh, 3rem) 0;
+}
+
+.mirror-stage-v1__eyebrow {
+  font-size: clamp(0.75rem, 1vw, 0.9rem);
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--color-text-subtle);
+}
+
+.mirror-stage-v1__product {
+  font-size: clamp(2.2rem, 5vw, 4rem);
+  font-weight: 200;
+  letter-spacing: 0.02em;
+  color: #e2e8f0;
+  line-height: 1.05;
+}
+
+.mirror-stage-v1__demo-badge {
+  display: inline-block;
+  margin-top: 0.6rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+/* ── Assistant orb ──────────────────────────────────────────────────────── */
+
+.assistant-orb {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(1rem, 2vh, 1.75rem);
+}
+
+.assistant-orb__halo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: clamp(220px, 26vw, 360px);
+  height: clamp(220px, 26vw, 360px);
+  transform: translate(-50%, -55%);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(56, 189, 248, 0.22) 0%,
+    rgba(96, 165, 250, 0.1) 40%,
+    transparent 70%
+  );
+  filter: blur(6px);
+  animation: orb-breathe 6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.assistant-orb__sphere {
+  position: relative;
+  width: clamp(150px, 17vw, 240px);
+  height: clamp(150px, 17vw, 240px);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 38% 32%, rgba(125, 211, 252, 0.9), rgba(37, 99, 235, 0.25) 55%, rgba(2, 6, 23, 0.9) 100%);
+  box-shadow:
+    inset 0 0 50px rgba(8, 47, 73, 0.6),
+    0 0 60px rgba(56, 189, 248, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.assistant-orb__core {
+  width: 32%;
+  height: 32%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(224, 242, 254, 0.95), rgba(125, 211, 252, 0.2) 70%, transparent);
+  filter: blur(1px);
+  animation: orb-breathe 6s ease-in-out infinite;
+}
+
+.assistant-orb__caption {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.assistant-orb__name {
+  font-size: clamp(1.4rem, 2.2vw, 2rem);
+  font-weight: 300;
+  letter-spacing: 0.06em;
+  color: #f1f5f9;
+}
+
+.assistant-orb__presence {
+  font-size: clamp(0.8rem, 1vw, 0.95rem);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-text-subtle);
+}
+
+@keyframes orb-breathe {
+  0%,
+  100% {
+    opacity: 0.85;
+    transform: translate(-50%, -55%) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -55%) scale(1.05);
+  }
+}
+
+.assistant-orb__core {
+  /* core breathes in place, not translated */
+  animation-name: core-breathe;
+}
+
+@keyframes core-breathe {
+  0%,
+  100% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+}
+
+/* ── Widget zones ───────────────────────────────────────────────────────── */
+
+.mirror-widgets-v1 {
+  grid-area: widgets;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: clamp(0.75rem, 1.5vw, 1.25rem);
+  align-content: end;
+}
+
+.mirror-widget {
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-lg);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: var(--shadow-glass);
+  padding: clamp(0.9rem, 1.3vw, 1.35rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: 120px;
+}
+
+.mirror-widget__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.mirror-widget__title {
+  font-size: 0.8rem;
+  font-weight: 400;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-text-subtle);
+}
+
+.mirror-widget__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  color: var(--color-text-primary);
+}
+
+/* Weather */
+.widget-weather__main {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.widget-weather__temp {
+  font-size: clamp(2rem, 3vw, 2.8rem);
+  font-weight: 200;
+  color: #e2e8f0;
+}
+
+.widget-weather__label {
+  font-size: 0.85rem;
+  color: var(--color-text-subtle);
+}
+
+/* Headlines */
+.widget-headlines__list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.widget-headlines__row {
+  font-size: 0.9rem;
+  line-height: 1.35;
+  color: var(--color-text-primary);
+  border-left: 2px solid rgba(56, 189, 248, 0.35);
+  padding-left: 0.6rem;
+}
+
+/* Briefing */
+.widget-briefing__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.88rem;
+}
+
+.widget-briefing__key {
+  color: var(--color-text-subtle);
+}
+
+.widget-briefing__val {
+  color: var(--color-text-primary);
+  text-align: right;
+}
+
+/* Cockpit placeholder */
+.widget-cockpit__text {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--color-text-subtle);
+}
+
+/* Map widget keeps the existing .mirror-map panel styles from ModeComponents.css.
+   Ensure it has room to render. */
+.widget-map .mirror-map {
+  width: 100%;
+  min-height: 110px;
+}
+
+/* ── Responsive: orb-first on narrow / mobile ───────────────────────────── */
+
+@media (max-width: 900px) {
+  .mirror-shell-v1__inner {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    grid-template-areas:
+      "stage"
+      "status"
+      "widgets";
+  }
+
+  .mirror-stage-v1 {
+    padding-top: clamp(1.5rem, 6vh, 4rem);
+  }
+
+  .system-status__list {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.5rem;
+  }
+
+  .system-status__row {
+    flex: 1 1 140px;
+  }
+}
+
+@media (max-width: 560px) {
+  .mirror-widgets-v1 {
+    grid-template-columns: 1fr;
+  }
+}

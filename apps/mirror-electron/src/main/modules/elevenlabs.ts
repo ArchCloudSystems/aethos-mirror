@@ -6,7 +6,7 @@ import type { VoiceStatus, VoiceTtsResult } from "@aethos/mirror-protocol";
 import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
 
 /**
- * ElevenLabs voice skeleton adapter for Ailee.
+ * ElevenLabs voice skeleton adapter for Mirror.
  *
  * Generates speech from text only when an API key is configured. The generated
  * audio is written to a local temp file and that path is returned (the app has
@@ -60,14 +60,14 @@ function describeFormat(outputFormat: string): {
  */
 export function getVoiceStatus(): VoiceStatus {
   const configured = Boolean(readString("ELEVENLABS_API_KEY"));
-  const aileeEnabled =
-    readString("AILEE_ENABLED") === undefined
+  const assistantEnabled =
+    readString("ASSISTANT_ENABLED") === undefined
       ? true
-      : isTruthy(readString("AILEE_ENABLED"));
+      : isTruthy(readString("ASSISTANT_ENABLED"));
 
   return {
     configured,
-    enabled: configured && aileeEnabled,
+    enabled: configured && assistantEnabled,
     voiceConfigured: Boolean(readString("ELEVENLABS_VOICE_ID")),
     modelId: readString("ELEVENLABS_MODEL_ID") ?? DEFAULT_MODEL_ID,
     outputFormat: readString("ELEVENLABS_OUTPUT_FORMAT") ?? DEFAULT_OUTPUT_FORMAT
@@ -144,7 +144,7 @@ export async function synthesizeSpeech(
     const { mimeType, ext } = describeFormat(outputFormat);
     const audioPath = path.join(
       os.tmpdir(),
-      `ailee-tts-${randomUUID()}.${ext}`
+      `mirror-tts-${randomUUID()}.${ext}`
     );
     await writeFile(audioPath, audio);
 

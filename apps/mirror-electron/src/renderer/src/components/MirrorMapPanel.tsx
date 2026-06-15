@@ -1,5 +1,5 @@
 /**
- * AileeMapPanel — safe static map fallback for the mirror.
+ * MirrorMapPanel — safe static map fallback for the mirror.
  *
  * This panel previously rendered an interactive react-leaflet / Leaflet map.
  * Leaflet executes module-level work (building a divIcon, importing its CSS)
@@ -10,15 +10,19 @@
  * To keep the mirror resilient, the map is rendered as a calm, fully static
  * SVG vignette. It pulls in no external map provider, requests no browser
  * geolocation, and performs no network calls — it simply visualises the
- * supplied coordinates as a quiet pin over a stylised grid. The Ailee visual
+ * supplied coordinates as a quiet pin over a stylised grid. The Mirror visual
  * direction (soft glow, calm palette) is preserved.
  */
 
-// San Diego, CA — matches AETHOS_MIRROR_DEFAULT_LAT/LON in .env.example.
-const FALLBACK_LAT = 32.7157;
-const FALLBACK_LON = -117.1611;
+import "./MirrorMapPanel.css";
 
-interface AileeMapPanelProps {
+// Neutral fallback coordinates (0,0) used only when no valid coordinate is
+// supplied. Matches the placeholder AETHOS_MIRROR_DEFAULT_LAT/LON in
+// .env.example; configure your real location there.
+const FALLBACK_LAT = 0.0;
+const FALLBACK_LON = 0.0;
+
+interface MirrorMapPanelProps {
   latitude?: number | null;
   longitude?: number | null;
   zoom?: number;
@@ -33,33 +37,33 @@ function formatCoord(value: number, positive: string, negative: string): string 
   return `${Math.abs(value).toFixed(2)}° ${hemisphere}`;
 }
 
-export function AileeMapPanel({
+export function MirrorMapPanel({
   latitude,
   longitude
-}: AileeMapPanelProps): JSX.Element {
+}: MirrorMapPanelProps): JSX.Element {
   const lat = isValidCoord(latitude) ? latitude : FALLBACK_LAT;
   const lon = isValidCoord(longitude) ? longitude : FALLBACK_LON;
 
   const label = `${formatCoord(lat, "N", "S")} · ${formatCoord(lon, "E", "W")}`;
 
   return (
-    <div className="ailee-map" aria-label={`Map — ${label}`}>
+    <div className="mirror-map" aria-label={`Map — ${label}`}>
       <svg
-        className="ailee-map__canvas"
+        className="mirror-map__canvas"
         viewBox="0 0 120 80"
         preserveAspectRatio="xMidYMid slice"
         role="img"
         aria-hidden="true"
       >
         <defs>
-          <radialGradient id="ailee-map-glow" cx="50%" cy="42%" r="60%">
+          <radialGradient id="mirror-map-glow" cx="50%" cy="42%" r="60%">
             <stop offset="0%" stopColor="rgba(96, 165, 250, 0.28)" />
             <stop offset="100%" stopColor="rgba(2, 6, 23, 0)" />
           </radialGradient>
         </defs>
 
         <rect x="0" y="0" width="120" height="80" fill="#050b1a" />
-        <rect x="0" y="0" width="120" height="80" fill="url(#ailee-map-glow)" />
+        <rect x="0" y="0" width="120" height="80" fill="url(#mirror-map-glow)" />
 
         {/* Quiet grid lines */}
         <g stroke="rgba(148, 163, 184, 0.16)" strokeWidth="0.5">
@@ -76,7 +80,7 @@ export function AileeMapPanel({
         <circle cx="60" cy="40" r="3.2" fill="#38bdf8" />
         <circle cx="60" cy="40" r="3.2" fill="none" stroke="rgba(56, 189, 248, 0.6)" strokeWidth="0.8" />
       </svg>
-      <span className="ailee-map__label">{label}</span>
+      <span className="mirror-map__label">{label}</span>
     </div>
   );
 }

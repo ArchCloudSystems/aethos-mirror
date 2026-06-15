@@ -2,29 +2,27 @@ import type {
   CalendarFeed,
   EmailSummary,
   NewsFeed,
-  WeatherReading
-} from "@aethos/mirror-protocol";
-import type {
-  AileeCommand,
+  WeatherReading,
+  MirrorCommand,
   CommandResult
-} from "@aethos/mirror-protocol/dist/types";
-import { AileeMapPanel } from "./AileeMapPanel";
+} from "@aethos/mirror-protocol";
+import { MirrorMapPanel } from "./MirrorMapPanel";
 import "./ModeComponents.css";
 
 // ─────────────────────────────────────────────────────────────────────────────────────────
-// Ailee Orb — central visual anchor
+// Mirror Orb — central visual anchor
 // ─────────────────────────────────────────────────────────────────────────────────────────
 
 // Visual state derived from the current mirror mode. Each state maps to a
 // CSS modifier (drives glow/animation) and a short calm status phrase.
-type AileeOrbState = "standing-by" | "briefing" | "listening" | "thinking" | "dimmed" | "attention";
+type MirrorOrbState = "standing-by" | "briefing" | "listening" | "thinking" | "dimmed" | "attention";
 
-interface AileeOrbStateInfo {
-  state: AileeOrbState;
+interface MirrorOrbStateInfo {
+  state: MirrorOrbState;
   phrase: string;
 }
 
-function deriveAileeOrbState(mode?: string): AileeOrbStateInfo {
+function deriveMirrorOrbState(mode?: string): MirrorOrbStateInfo {
   switch (mode) {
     case "briefing":
       return { state: "briefing", phrase: "Briefing" };
@@ -44,49 +42,49 @@ function deriveAileeOrbState(mode?: string): AileeOrbStateInfo {
   }
 }
 
-interface AileeOrbProps {
+interface MirrorOrbProps {
   // Optional current mode; when omitted the orb rests in its standing-by state.
   mode?: string;
 }
 
-export function AileeOrb({ mode }: AileeOrbProps): JSX.Element {
-  const { state, phrase } = deriveAileeOrbState(mode);
+export function MirrorOrb({ mode }: MirrorOrbProps): JSX.Element {
+  const { state, phrase } = deriveMirrorOrbState(mode);
 
   return (
-    <div className={`ailee-orb ailee-orb--${state}`} role="img" aria-label={`Ailee — ${phrase}`}>
-      <div className="ailee-orb__halo" aria-hidden="true"></div>
-      <div className="ailee-orb__sphere" aria-hidden="true">
-        <span className="ailee-orb__core"></span>
+    <div className={`mirror-orb mirror-orb--${state}`} role="img" aria-label={`Mirror — ${phrase}`}>
+      <div className="mirror-orb__halo" aria-hidden="true"></div>
+      <div className="mirror-orb__sphere" aria-hidden="true">
+        <span className="mirror-orb__core"></span>
       </div>
-      <div className="ailee-orb__caption">
-        <span className="ailee-orb__name">Ailee</span>
-        <span className="ailee-orb__status">{phrase}</span>
+      <div className="mirror-orb__caption">
+        <span className="mirror-orb__name">Mirror</span>
+        <span className="mirror-orb__status">{phrase}</span>
       </div>
     </div>
   );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────────────────
-// Mirror Modules — MagicMirror-style widgets around the Ailee orb
+// Mirror Modules — MagicMirror-style widgets around the Mirror orb
 // ─────────────────────────────────────────────────────────────────────────────────────────
 
-// Widgets render live data from the LOCAL Ailee module API when available, and
+// Widgets render live data from the LOCAL Mirror module API when available, and
 // fall back to calm, distance-readable placeholders when a module is not
 // configured or its endpoint is unreachable. The map remains a static
 // OpenStreetMap-style visual for now.
 
 interface CommandChip {
-  command: AileeCommand;
+  command: MirrorCommand;
   label: string;
 }
 
 const COMMAND_CHIPS: CommandChip[] = [
-  { command: "latest_news", label: "Ailee, latest news" },
-  { command: "weather", label: "Ailee, weather" },
-  { command: "show_map", label: "Ailee, show map" },
-  { command: "open_youtube", label: "Ailee, open YouTube" },
-  { command: "check_email", label: "Ailee, check email" },
-  { command: "wake_update", label: "Ailee, update me" },
+  { command: "latest_news", label: "Mirror, latest news" },
+  { command: "weather", label: "Mirror, weather" },
+  { command: "show_map", label: "Mirror, show map" },
+  { command: "open_youtube", label: "Mirror, open YouTube" },
+  { command: "check_email", label: "Mirror, check email" },
+  { command: "wake_update", label: "Mirror, update me" },
 ];
 
 const HEADLINE_PLACEHOLDERS = [
@@ -104,12 +102,12 @@ export interface MirrorModulesData {
 
 interface MirrorModulesProps {
   data?: MirrorModulesData;
-  /** Most recent command result, shown in the Ailee status area. */
+  /** Most recent command result, shown in the Mirror status area. */
   lastCommand?: CommandResult | null;
   /** True while a command request is in flight. */
   commandPending?: boolean;
   /** Invoked when a command chip is activated. */
-  onCommand?: (command: AileeCommand) => void;
+  onCommand?: (command: MirrorCommand) => void;
 }
 
 function formatTemperature(weather: WeatherReading | null | undefined): string {
@@ -222,41 +220,41 @@ export function MirrorModules({
 
         <div className="module-preview module-map">
           <span className="module-heading">Map</span>
-          <AileeMapPanel
+          <MirrorMapPanel
             latitude={weather?.latitude ?? null}
             longitude={weather?.longitude ?? null}
           />
         </div>
       </div>
 
-      {/* Ailee status area — shows the most recent command result */}
+      {/* Mirror status area — shows the most recent command result */}
       <div
-        className="mirror-module mirror-module--status module-ailee-status"
+        className="mirror-module mirror-module--status module-mirror-status"
         aria-live="polite"
       >
-        <span className="module-heading">Ailee</span>
+        <span className="module-heading">Mirror</span>
         {commandPending ? (
-          <span className="module-ailee-status__summary">Working…</span>
+          <span className="module-mirror-status__summary">Working…</span>
         ) : lastCommand ? (
           <>
             <span
-              className={`module-ailee-status__summary${
+              className={`module-mirror-status__summary${
                 lastCommand.ok ? "" : " is-error"
               }`}
             >
               {lastCommand.summary}
             </span>
             {lastCommand.sections.length > 0 && (
-              <ul className="module-ailee-status__sections">
+              <ul className="module-mirror-status__sections">
                 {lastCommand.sections.slice(0, 5).map((section) => (
                   <li
                     key={section.label}
-                    className="module-ailee-status__section"
+                    className="module-mirror-status__section"
                   >
-                    <span className="module-ailee-status__label">
+                    <span className="module-mirror-status__label">
                       {section.label}
                     </span>
-                    <span className="module-ailee-status__line">
+                    <span className="module-mirror-status__line">
                       {section.lines[0] ?? ""}
                     </span>
                   </li>
@@ -265,7 +263,7 @@ export function MirrorModules({
             )}
           </>
         ) : (
-          <span className="module-ailee-status__summary">
+          <span className="module-mirror-status__summary">
             Standing by — try a command below
           </span>
         )}
@@ -297,16 +295,16 @@ export function LandingMode(): JSX.Element {
   return (
     <main className="mirror-shell">
       <section className="mirror-card">
-        <p className="eyebrow">AetherCore Display Node</p>
+        <p className="eyebrow">Display Node</p>
         <h1>Aethos Mirror</h1>
 
         <div className="status-grid">
           <div>
-            <span>CAILEAN</span>
+            <span>Assistant</span>
             <strong>standby</strong>
           </div>
           <div>
-            <span>EILIDH / Ailee</span>
+            <span>Bridge</span>
             <strong>standby</strong>
           </div>
           <div>
@@ -320,7 +318,7 @@ export function LandingMode(): JSX.Element {
         </div>
 
         <p className="note">
-          Aethos Mirror is the display, browser, and overlay appliance. AetherCore remains the brain.
+          Aethos Mirror is the display, browser, and overlay surface. The assistant connects through the optional assistant bridge.
         </p>
       </section>
     </main>
@@ -393,59 +391,22 @@ export function BriefingMode(): JSX.Element {
 // ─────────────────────────────────────────────────────────────────────────────────────────
 
 export function BrowserMode(): JSX.Element {
-  // Note: This uses iframe as Electron renderer cannot embed Chromium directly
-  // In production, use webContents.executeJavaScript for direct DOM manipulation
+  // Browser mode is NOT implemented in v0.1. There is no real embedded Chromium
+  // surface (no BrowserView / WebContentsView). Show an honest placeholder
+  // rather than a fake browser/search UI.
   return (
     <main className="mirror-shell browser">
       <section className="mirror-card browser-card">
         <header className="browser-header">
-          <div className="nav-bar">
-            <button className="nav-btn">←</button>
-            <button className="nav-btn">→</button>
-            <button className="nav-btn">↻</button>
-            <div className="url-bar">
-              <span className="protocol">https://</span>
-              <input type="text" value="example.com" readOnly />
-            </div>
-            <div className="search-bar">
-              <input type="text" placeholder="Search the web..." />
-            </div>
-          </div>
+          <p className="eyebrow">Browser</p>
+          <h1>Browser not implemented</h1>
         </header>
-
         <div className="browser-content">
-          <div className="browser-tabs">
-            <span className="active-tab">Search</span>
-            <span className="tab">History</span>
-            <span className="tab">Bookmarks</span>
-            <span className="tab close-tab">+</span>
-          </div>
-          <div className="browser-body">
-            <div className="search-result">
-              <h4 className="search-title">Aethos Mirror v0.2 Release Notes</h4>
-              <p className="search-snippet">
-                This update introduces native mode switching, improved API integration,
-                and better state management for multi-mode operation...
-              </p>
-              <a href="#" className="search-link">https://github.com/aethos/mirror/releases</a>
-            </div>
-            <div className="search-result">
-              <h4 className="search-title">React 19 Available Now</h4>
-              <p className="search-snippet">
-                The latest version of React brings new features for server components,
-                server actions, and improved performance...
-              </p>
-              <a href="#" className="search-link">https://react.dev</a>
-            </div>
-            <div className="search-result">
-              <h4 className="search-title">TypeScript 5.5 Improvements</h4>
-              <p className="search-snippet">
-                Type-only imports, better exhaustiveness checking, and enhanced
-                JSDoc Support in TypeScript 5.5...
-              </p>
-              <a href="#" className="search-link">https://typescriptlang.org</a>
-            </div>
-          </div>
+          <p>
+            A real embedded Chromium browser (Electron
+            BrowserView / WebContentsView) is planned but not yet built. This
+            mode is a placeholder — no web page is being loaded or rendered.
+          </p>
         </div>
       </section>
     </main>
@@ -462,7 +423,7 @@ export function CockpitMode(): JSX.Element {
       <section className="mirror-card">
         <header className="cockpit-header">
           <div>
-            <p className="eyebrow">AetherCore Cockpit</p>
+            <p className="eyebrow">Assistant Cockpit</p>
             <h1>System Control</h1>
           </div>
           <div className="cockpit-status">
@@ -475,9 +436,9 @@ export function CockpitMode(): JSX.Element {
           <div className="cockpit-panel">
             <h3>Assistants</h3>
             <div className="assistant-buttons">
-              <button className="assistant-btn active">Cailean</button>
-              <button className="assistant-btn">Eilidh</button>
-              <button className="assistant-btn">Ailee</button>
+              <button className="assistant-btn active">Assistant</button>
+              <button className="assistant-btn">Aethos</button>
+              <button className="assistant-btn">Operator</button>
             </div>
           </div>
 
@@ -532,7 +493,7 @@ export function ToolPanelMode(): JSX.Element {
     <main className="mirror-shell tool-panel">
       <section className="mirror-card">
         <header className="tool-header">
-          <p className="eyebrow">AetherCore Developer Tools</p>
+          <p className="eyebrow">Developer Tools</p>
           <h1>Tool Panel</h1>
         </header>
 
@@ -604,38 +565,29 @@ export function VoiceOnlyMode(): JSX.Element {
       <section className="mirror-card voice-card">
         <header className="voice-header">
           <p className="eyebrow">Voice Mode</p>
-          <h1>Listening...</h1>
+          <h1>Text-to-speech only</h1>
         </header>
 
-        <div className="voice-visualizer">
-          <div className="bar active"></div>
-          <div className="bar"></div>
-          <div className="bar"></div>
-          <div className="bar active"></div>
-          <div className="bar"></div>
-          <div className="bar active"></div>
-          <div className="bar"></div>
-          <div className="bar active"></div>
-        </div>
-
         <div className="voice-status">
-          <span className="status-dot pulse"></span>
-          <span>Active Listening</span>
-          <span className="mic-status">Mic: <strong>Enabled</strong></span>
+          <span className="status-dot"></span>
+          <span>Mic capture: not implemented</span>
+          <span className="mic-status">
+            Wake word: <strong>not implemented</strong>
+          </span>
         </div>
 
         <div className="voice-config">
           <div className="config-row">
             <span>Voice Engine</span>
-            <strong>OpenAI TTS</strong>
+            <strong>ElevenLabs (TTS, BYOK)</strong>
           </div>
           <div className="config-row">
-            <span>Wake Word</span>
-            <strong>Cailean</strong>
+            <span>Microphone listening</span>
+            <strong>Not implemented</strong>
           </div>
           <div className="config-row">
-            <span>Default Language</span>
-            <strong>English (US)</strong>
+            <span>Wake word detection</span>
+            <strong>Not implemented</strong>
           </div>
         </div>
       </section>
@@ -656,11 +608,11 @@ export function SleepMode(): JSX.Element {
         </div>
         <div className="sleep-text">
           <h1>System Sleeping</h1>
-          <p>Press any key or speak wake word to activate</p>
+          <p>Press any key to activate</p>
         </div>
         <div className="sleep-timer">
-          <strong>Next Wake:</strong>
-          <span>08:00 AM</span>
+          <strong>Status:</strong>
+          <span>Placeholder — scheduled wake not implemented</span>
         </div>
       </section>
     </main>
@@ -693,7 +645,7 @@ export function ErrorMode({ error }: { error: string }): JSX.Element {
             <div className="error-info">
               <span>Time: {new Date().toLocaleTimeString()}</span>
               <span>Mode: landing</span>
-              <span>Device: mothership-main-display</span>
+              <span>Device: aethos-mirror</span>
             </div>
           </div>
         </div>

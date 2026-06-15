@@ -1,9 +1,9 @@
 import type {
-  AileeCommand,
+  MirrorCommand,
   CommandResult,
   CommandResultSection
-} from "@aethos/mirror-protocol/dist/types";
-import { getAileeModulesStatus } from "../config";
+} from "@aethos/mirror-protocol";
+import { getMirrorModulesStatus } from "../config";
 import { getVoiceStatus } from "./elevenlabs";
 import { getCalendarFeed } from "./google";
 import { getEmailSummary } from "./google";
@@ -11,7 +11,7 @@ import { getNewsFeed } from "./news";
 import { getWeatherReading } from "./weather";
 
 /**
- * Deterministic local command path for the Ailee wake/update flow.
+ * Deterministic local command path for the Mirror wake/update flow.
  *
  * Every command is READ-ONLY: it only reads from the local module adapters and
  * aggregates their already-sanitized output. No external writes, no secrets.
@@ -19,7 +19,7 @@ import { getWeatherReading } from "./weather";
  * auto-played here — playback remains a separate, explicit step.
  */
 
-const SUPPORTED_COMMANDS: ReadonlySet<AileeCommand> = new Set<AileeCommand>([
+const SUPPORTED_COMMANDS: ReadonlySet<MirrorCommand> = new Set<MirrorCommand>([
   "latest_news",
   "weather",
   "show_map",
@@ -28,8 +28,8 @@ const SUPPORTED_COMMANDS: ReadonlySet<AileeCommand> = new Set<AileeCommand>([
   "wake_update"
 ]);
 
-export function isAileeCommand(value: unknown): value is AileeCommand {
-  return typeof value === "string" && SUPPORTED_COMMANDS.has(value as AileeCommand);
+export function isMirrorCommand(value: unknown): value is MirrorCommand {
+  return typeof value === "string" && SUPPORTED_COMMANDS.has(value as MirrorCommand);
 }
 
 function formatTemperature(temp: number | null): string {
@@ -156,7 +156,7 @@ async function buildEmailSection(): Promise<{
 }
 
 function buildMapSection(): { section: CommandResultSection; summary: string } {
-  const status = getAileeModulesStatus();
+  const status = getMirrorModulesStatus();
   const map = status.map;
   const summary = map.configured
     ? `Map ready (${map.provider})`
@@ -182,8 +182,8 @@ function joinSpeech(parts: string[]): string {
 /**
  * Execute a deterministic local command. Always resolves; read-only.
  */
-export async function runAileeCommand(
-  command: AileeCommand
+export async function runMirrorCommand(
+  command: MirrorCommand
 ): Promise<CommandResult> {
   const voiceConfigured = getVoiceStatus().configured;
   const producedAt = new Date().toISOString();

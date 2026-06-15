@@ -1,12 +1,24 @@
 import http from "node:http";
 import type { MirrorMode } from "@aethos/mirror-protocol";
-import { getAileeConfigStatus, getAileeModulesStatus } from "./config";
-import { isAileeCommand, runAileeCommand } from "./modules/commands";
+import { getMirrorConfigStatus, getMirrorModulesStatus } from "./config";
+import {
+  browserGoBack,
+  browserGoForward,
+  browserGoHome,
+  getBrowserState,
+  hideBrowserSurface,
+  navigateBrowser,
+  reloadBrowser,
+  showBrowserSurface
+} from "./browser";
+import { isMirrorCommand, runMirrorCommand } from "./modules/commands";
 import { synthesizeSpeech, getVoiceStatus } from "./modules/elevenlabs";
 import { getCalendarFeed, getEmailSummary } from "./modules/google";
 import { getNewsFeed } from "./modules/news";
+import { getLlmStatus, runLlmChat } from "./modules/llm";
 import { getTelegramStatus, sendTelegramMessage } from "./modules/telegram";
 import { getWeatherReading } from "./modules/weather";
+import { getSetupStatus, MalformedConfigError } from "./setup-status";
 import { getMirrorState, setMirrorMode } from "./state";
 
 const VALID_MODES = new Set<MirrorMode>([
@@ -74,11 +86,52 @@ export function startApiServer(port: number): http.Server {
         return;
       }
 
+      if (method === "GET" && url.pathname === "/setup/status") {
+        // Secret-free setup + provider readiness derived from the shared
+        // registry. Returns the SAME contract the `providers:check` CLI uses.
+        // A malformed config.json/secrets.env surfaces as a 500 so the caller
+        // knows the files are broken (never returns secret values).
+        try {
+          sendJson(res, 200, {
+            ok: true,
+            setup: getSetupStatus()
+          });
+        } catch (error) {
+          if (error instanceof MalformedConfigError) {
+            sendJson(res, 500, {
+              ok: false,
+              error: error.message
+            });
+            return;
+          }
+          throw error;
+        }
+        return;
+      }
+
+      if (method === "GET" && url.pathname === "/llm/status") {
+        // Read-only LLM status; never returns the API key.
+        sendJson(res, 200, {
+          ok: true,
+          llm: getLlmStatus()
+        });
+        return;
+      }
+
+      if (method === "POST" && url.pathname === "/llm/chat") {
+        // Runs an LLM chat turn. Never logs the prompt or returns the key.
+        // runLlmChat always resolves with a structured safe result.
+        const body = await readJsonBody(req);
+        const result = await runLlmChat(body);
+        sendJson(res, result.ok ? 200 : 400, result);
+        return;
+      }
+
       if (method === "GET" && url.pathname === "/config/status") {
         // Sanitized status only — never exposes raw keys or tokens.
         sendJson(res, 200, {
           ok: true,
-          config: getAileeConfigStatus()
+          config: getMirrorConfigStatus()
         });
         return;
       }
@@ -87,7 +140,7 @@ export function startApiServer(port: number): http.Server {
         // Read-only, secret-free module status map. No raw keys/tokens.
         sendJson(res, 200, {
           ok: true,
-          modules: getAileeModulesStatus()
+          modules: getMirrorModulesStatus()
         });
         return;
       }
@@ -182,7 +235,7 @@ export function startApiServer(port: number): http.Server {
             ? (body as { command: unknown }).command
             : undefined;
 
-        if (!isAileeCommand(command)) {
+        if (!isMirrorCommand(command)) {
           sendJson(res, 400, {
             ok: false,
             error: "Invalid or missing command"
@@ -190,7 +243,7 @@ export function startApiServer(port: number): http.Server {
           return;
         }
 
-        const result = await runAileeCommand(command);
+        const result = await runMirrorCommand(command);
         sendJson(res, result.ok ? 200 : 400, result);
         return;
       }
@@ -216,7 +269,78 @@ export function startApiServer(port: number): http.Server {
           return;
         }
 
-        sendJson(res, 200, setMirrorMode(mode));
+        const updated = setMirrorMode(mode);
+
+        // Show the real browser surface only in browser mode; hide it for any
+        // other mode so the renderer mirror home is visible.
+        if (mode === "browser") {
+          showBrowserSurface();
+        } else {
+          hideBrowserSurface();
+        }
+
+        sendJson(res, 200, updated);
+        return;
+      }
+
+      // ── Real embedded browser surface ───────────────────────────────────
+      if (method === "GET" && url.pathname === "/browser/state") {
+        sendJson(res, 200, { ok: true, browser: getBrowserState() });
+        return;
+      }
+
+      if (method === "POST" && url.pathname === "/browser/navigate") {
+        const body = await readJsonBody(req);
+        const targetUrl =
+          body && typeof body === "object" && "url" in body
+            ? String((body as { url: unknown }).url)
+            : "";
+        const result = navigateBrowser(targetUrl);
+        sendJson(res, result.ok ? 200 : 400, {
+          ok: result.ok,
+          error: result.error,
+          browser: getBrowserState()
+        });
+        return;
+      }
+
+      if (method === "POST" && url.pathname === "/browser/reload") {
+        const result = reloadBrowser();
+        sendJson(res, result.ok ? 200 : 400, {
+          ok: result.ok,
+          error: result.error,
+          browser: getBrowserState()
+        });
+        return;
+      }
+
+      if (method === "POST" && url.pathname === "/browser/back") {
+        const result = browserGoBack();
+        sendJson(res, result.ok ? 200 : 400, {
+          ok: result.ok,
+          error: result.error,
+          browser: getBrowserState()
+        });
+        return;
+      }
+
+      if (method === "POST" && url.pathname === "/browser/forward") {
+        const result = browserGoForward();
+        sendJson(res, result.ok ? 200 : 400, {
+          ok: result.ok,
+          error: result.error,
+          browser: getBrowserState()
+        });
+        return;
+      }
+
+      if (method === "POST" && url.pathname === "/browser/home") {
+        const result = browserGoHome();
+        sendJson(res, result.ok ? 200 : 400, {
+          ok: result.ok,
+          error: result.error,
+          browser: getBrowserState()
+        });
         return;
       }
 

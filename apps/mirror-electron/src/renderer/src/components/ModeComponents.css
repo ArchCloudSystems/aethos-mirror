@@ -651,19 +651,19 @@
     font-size: 2rem;
   }
 
-  .ailee-orb__sphere {
+  .mirror-orb__sphere {
     width: 200px;
     height: 200px;
   }
 
-  .ailee-orb__halo {
+  .mirror-orb__halo {
     width: 280px;
     height: 280px;
   }
 }
 
-/* ─────── Ailee Orb ─────── */
-.ailee-orb {
+/* ─────── Mirror Orb ─────── */
+.mirror-orb {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -674,7 +674,7 @@
 }
 
 /* Soft outer halo / glow behind the sphere */
-.ailee-orb__halo {
+.mirror-orb__halo {
   position: absolute;
   top: 0;
   left: 50%;
@@ -691,11 +691,11 @@
     transparent 72%
   );
   filter: blur(8px);
-  animation: aileeHaloBreathe 6s ease-in-out infinite;
+  animation: mirrorHaloBreathe 6s ease-in-out infinite;
 }
 
 /* The orb itself — layered radial gradients + glass surface */
-.ailee-orb__sphere {
+.mirror-orb__sphere {
   position: relative;
   width: 260px;
   height: 260px;
@@ -712,11 +712,11 @@
     inset 0 0 60px rgba(15, 23, 42, 0.55),
     inset 0 0 90px rgba(96, 165, 250, 0.15);
   backdrop-filter: blur(6px);
-  animation: aileeOrbBreathe 6s ease-in-out infinite;
+  animation: mirrorOrbBreathe 6s ease-in-out infinite;
 }
 
 /* Inner luminous core */
-.ailee-orb__core {
+.mirror-orb__core {
   width: 90px;
   height: 90px;
   border-radius: 50%;
@@ -728,11 +728,11 @@
     transparent 100%
   );
   filter: blur(2px);
-  animation: aileeCorePulse 4s ease-in-out infinite;
+  animation: mirrorCorePulse 4s ease-in-out infinite;
 }
 
 /* Label + status phrase */
-.ailee-orb__caption {
+.mirror-orb__caption {
   margin-top: 2rem;
   text-align: center;
   display: flex;
@@ -740,7 +740,7 @@
   gap: 0.35rem;
 }
 
-.ailee-orb__name {
+.mirror-orb__name {
   font-size: 1.5rem;
   font-weight: 500;
   letter-spacing: 0.12em;
@@ -748,7 +748,7 @@
   color: var(--color-text-primary);
 }
 
-.ailee-orb__status {
+.mirror-orb__status {
   font-size: 0.95rem;
   letter-spacing: 0.06em;
   color: var(--color-text-subtle);
@@ -759,7 +759,7 @@
 /* standing-by: calm default (handled by base styles) */
 
 /* briefing: slightly brighter, steady */
-.ailee-orb--briefing .ailee-orb__sphere {
+.mirror-orb--briefing .mirror-orb__sphere {
   box-shadow:
     0 0 75px rgba(56, 189, 248, 0.32),
     inset 0 0 60px rgba(15, 23, 42, 0.5),
@@ -767,37 +767,37 @@
 }
 
 /* listening: faster, lively pulse */
-.ailee-orb--listening .ailee-orb__core {
+.mirror-orb--listening .mirror-orb__core {
   animation-duration: 1.8s;
 }
 
-.ailee-orb--listening .ailee-orb__halo {
+.mirror-orb--listening .mirror-orb__halo {
   animation-duration: 3s;
 }
 
 /* thinking: slower, contemplative drift */
-.ailee-orb--thinking .ailee-orb__sphere,
-.ailee-orb--thinking .ailee-orb__halo {
+.mirror-orb--thinking .mirror-orb__sphere,
+.mirror-orb--thinking .mirror-orb__halo {
   animation-duration: 9s;
 }
 
-.ailee-orb--thinking .ailee-orb__core {
+.mirror-orb--thinking .mirror-orb__core {
   animation-duration: 6s;
 }
 
 /* dimmed: low energy, subdued glow */
-.ailee-orb--dimmed {
+.mirror-orb--dimmed {
   opacity: 0.55;
 }
 
-.ailee-orb--dimmed .ailee-orb__sphere,
-.ailee-orb--dimmed .ailee-orb__halo,
-.ailee-orb--dimmed .ailee-orb__core {
+.mirror-orb--dimmed .mirror-orb__sphere,
+.mirror-orb--dimmed .mirror-orb__halo,
+.mirror-orb--dimmed .mirror-orb__core {
   animation-duration: 12s;
 }
 
 /* attention: subtle warm emphasis without changing accent palette */
-.ailee-orb--attention .ailee-orb__halo {
+.mirror-orb--attention .mirror-orb__halo {
   background: radial-gradient(
     circle at 50% 45%,
     rgba(248, 180, 120, 0.32) 0%,
@@ -806,7 +806,7 @@
   );
 }
 
-@keyframes aileeOrbBreathe {
+@keyframes mirrorOrbBreathe {
   0%, 100% {
     transform: scale(1);
   }
@@ -815,7 +815,7 @@
   }
 }
 
-@keyframes aileeHaloBreathe {
+@keyframes mirrorHaloBreathe {
   0%, 100% {
     opacity: 0.75;
     transform: translateX(-50%) scale(1);
@@ -826,7 +826,7 @@
   }
 }
 
-@keyframes aileeCorePulse {
+@keyframes mirrorCorePulse {
   0%, 100% {
     opacity: 0.85;
     transform: scale(1);
@@ -1048,7 +1048,7 @@
 }
 
 /* Static map panel — small and quiet (no external map provider) */
-.ailee-map {
+.mirror-map {
   position: relative;
   width: 160px;
   height: 90px;
@@ -1057,7 +1057,7 @@
   overflow: hidden;
 }
 
-.ailee-map__canvas {
+.mirror-map__canvas {
   display: block;
   width: 100%;
   height: 100%;
@@ -1066,7 +1066,7 @@
   background: rgba(15, 23, 42, 0.4);
 }
 
-.ailee-map__label {
+.mirror-map__label {
   position: absolute;
   bottom: 4px;
   right: 6px;
@@ -1076,7 +1076,7 @@
   text-shadow: 0 1px 2px rgba(2, 6, 23, 0.8);
 }
 
-.ailee-map__pin-icon {
+.mirror-map__pin-icon {
   width: 12px;
   height: 12px;
   border-radius: 50%;
@@ -1120,8 +1120,8 @@
   cursor: default;
 }
 
-/* Ailee status area — most recent command result */
-.module-ailee-status {
+/* Mirror status area — most recent command result */
+.module-mirror-status {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -1132,17 +1132,17 @@
   background: rgba(15, 23, 42, 0.35);
 }
 
-.module-ailee-status__summary {
+.module-mirror-status__summary {
   font-size: 1.05rem;
   line-height: 1.4;
   color: var(--color-text-primary);
 }
 
-.module-ailee-status__summary.is-error {
+.module-mirror-status__summary.is-error {
   color: rgba(248, 180, 180, 0.9);
 }
 
-.module-ailee-status__sections {
+.module-mirror-status__sections {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -1151,21 +1151,21 @@
   gap: 0.35rem;
 }
 
-.module-ailee-status__section {
+.module-mirror-status__section {
   display: flex;
   gap: 0.6rem;
   font-size: 0.9rem;
   line-height: 1.35;
 }
 
-.module-ailee-status__label {
+.module-mirror-status__label {
   flex: 0 0 auto;
   min-width: 72px;
   color: rgba(148, 163, 184, 0.7);
   letter-spacing: 0.02em;
 }
 
-.module-ailee-status__line {
+.module-mirror-status__line {
   color: var(--color-text-primary);
 }
 
@@ -1293,30 +1293,30 @@
     font-size: 1.4rem;
   }
 
-  .ailee-orb {
+  .mirror-orb {
     margin: 1.5rem auto;
   }
 
-  .ailee-orb__sphere {
+  .mirror-orb__sphere {
     width: 170px;
     height: 170px;
   }
 
-  .ailee-orb__halo {
+  .mirror-orb__halo {
     width: 230px;
     height: 230px;
   }
 
-  .ailee-orb__core {
+  .mirror-orb__core {
     width: 64px;
     height: 64px;
   }
 
-  .ailee-orb__name {
+  .mirror-orb__name {
     font-size: 1.25rem;
   }
 
-  .ailee-orb__status {
+  .mirror-orb__status {
     font-size: 0.85rem;
   }
 
@@ -1340,17 +1340,17 @@
 
 /* ── Very small handsets: trim hints further, keep core legible ── */
 @media (max-width: 380px) {
-  .ailee-orb__sphere {
+  .mirror-orb__sphere {
     width: 140px;
     height: 140px;
   }
 
-  .ailee-orb__halo {
+  .mirror-orb__halo {
     width: 190px;
     height: 190px;
   }
 
-  .ailee-orb__core {
+  .mirror-orb__core {
     width: 52px;
     height: 52px;
   }
@@ -1367,21 +1367,21 @@
 
 /* ── Short / landscape kiosk panels: keep the orb from crowding edges ── */
 @media (max-height: 520px) {
-  .ailee-orb {
+  .mirror-orb {
     margin: 1rem auto;
   }
 
-  .ailee-orb__sphere {
+  .mirror-orb__sphere {
     width: 150px;
     height: 150px;
   }
 
-  .ailee-orb__halo {
+  .mirror-orb__halo {
     width: 200px;
     height: 200px;
   }
 
-  .ailee-orb__caption {
+  .mirror-orb__caption {
     margin-top: 1rem;
   }
 

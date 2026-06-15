@@ -1,7 +1,7 @@
 import type { WeatherReading } from "@aethos/mirror-protocol";
 
 /**
- * Read-only weather adapter for Ailee.
+ * Read-only weather adapter for Mirror.
  *
  * Fetches current conditions from OpenWeatherMap when configured, otherwise
  * returns a clearly-marked fallback placeholder. The adapter NEVER throws and

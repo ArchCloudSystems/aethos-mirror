@@ -1,3 +1,5 @@
+import type { ConfigSource } from "./provider-registry";
+
 export type MirrorMode =
   | "landing"
   | "briefing"
@@ -8,7 +10,7 @@ export type MirrorMode =
   | "sleep"
   | "error";
 
-export type AssistantKey = "cailean" | "eilidh" | "none";
+export type AssistantKey = "assistant" | "none";
 
 export interface MirrorCommandReceipt {
   id: string;
@@ -30,13 +32,98 @@ export interface MirrorState {
 }
 
 /**
+ * Browser navigation/control state for the real embedded Chromium surface.
+ *
+ * The browser surface is a main-process Electron `BrowserView` attached to the
+ * mirror window when browser mode is active. Remote pages run with no Node
+ * access and context isolation enabled. This type is the secret-free,
+ * read-only snapshot returned by `GET /browser/state`; all fields reflect the
+ * live `webContents` of the browser surface.
+ */
+export interface BrowserState {
+  /** True once the embedded browser surface has been created. */
+  implemented: boolean;
+  /** True while the browser surface is attached/visible (browser mode). */
+  active: boolean;
+  /** Currently loaded URL, or null when nothing has been loaded yet. */
+  currentUrl: string | null;
+  /** Page title of the loaded URL, or null. */
+  title: string | null;
+  /** Whether a navigation is in progress. */
+  loading: boolean;
+  /** Whether back navigation is currently possible. */
+  canGoBack: boolean;
+  /** Whether forward navigation is currently possible. */
+  canGoForward: boolean;
+  /** The configured home URL the surface returns to on "home". */
+  homeUrl: string;
+  /**
+   * Last navigation error, or null. Carries a stable, secret-free code and a
+   * short human-readable description (e.g. failed load). Never contains
+   * credentials or full response bodies.
+   */
+  lastError: BrowserError | null;
+}
+
+/** A stable, secret-free description of a failed navigation. */
+export interface BrowserError {
+  /** Electron error code (negative int) or 0 when not applicable. */
+  code: number;
+  /** Short, secret-free description of the failure. */
+  message: string;
+  /** The URL that failed to load, when known. */
+  url: string | null;
+  /** ISO timestamp of when the error occurred. */
+  occurredAt: string;
+}
+
+/**
+ * Voice subsystem state.
+ *
+ * NOTE: As of v0.1 there is NO live microphone capture and NO wake-word
+ * detection. Only outbound text-to-speech (ElevenLabs) is wired, and even that
+ * writes to a local temp file rather than auto-playing. `listening` and
+ * `wakeWordActive` are therefore part of the contract for a future capability
+ * and are reported `false` today. Do NOT surface them as live behavior.
+ */
+export interface VoiceState {
+  /** Whether voice (TTS) is configured. Mic capture is not implemented. */
+  configured: boolean;
+  /** Whether the master assistant switch is enabled. */
+  enabled: boolean;
+  /** Live microphone capture. NOT implemented in v0.1 — always false. */
+  listening: boolean;
+  /** Wake-word detection. NOT implemented in v0.1 — always false. */
+  wakeWordActive: boolean;
+  /** Whether TTS playback is currently in progress (best-effort). */
+  speaking: boolean;
+}
+
+/**
+ * Aggregate, secret-free runtime status of the mirror. Combines the core
+ * {@link MirrorState}, the per-module configuration status, and the truthful
+ * voice/browser capability flags into a single read-only snapshot. Carries no
+ * keys, tokens, or other secrets.
+ */
+export interface MirrorStatus {
+  mode: MirrorMode;
+  deviceId: string;
+  deviceName: string;
+  modules: MirrorModulesStatus;
+  voice: VoiceState;
+  browser: BrowserState;
+  /** ISO timestamp of when this status snapshot was produced. */
+  updatedAt: string;
+}
+
+/**
  * Telegram delivery mode. `disabled` means no token is configured or the
  * module is turned off; otherwise it reflects how updates are received.
  */
 export type TelegramMode = "polling" | "webhook" | "disabled";
 
 /**
- * Read-only, secret-free status for each Ailee module. These shapes never
+ * Read-only, secret-free status for each Mirror module. These shapes never
  * carry raw API keys, tokens, or other credentials — only booleans and
  * non-sensitive identifiers (provider names, location label, mode).
  */
@@ -73,19 +160,19 @@ export interface MapModuleStatus {
   provider: string;
 }
 
-export interface AetherCoreBridgeModuleStatus {
+export interface AssistantBridgeModuleStatus {
   configured: boolean;
   enabled: boolean;
 }
 
-export interface AileeModulesStatus {
+export interface MirrorModulesStatus {
   telegram: TelegramModuleStatus;
   elevenLabs: ElevenLabsModuleStatus;
   google: GoogleModuleStatus;
   news: NewsModuleStatus;
   weather: WeatherModuleStatus;
   map: MapModuleStatus;
-  aetherCoreBridge: AetherCoreBridgeModuleStatus;
+  assistantBridge: AssistantBridgeModuleStatus;
 }
 
 /**
@@ -271,7 +358,7 @@ export interface VoiceTtsResult {
  * Deterministic local commands supported by `POST /modules/command`. These map
  * to the renderer command chips and the wake update flow. All are read-only.
  */
-export type AileeCommand =
+export type MirrorCommand =
   | "latest_news"
   | "weather"
   | "show_map"
@@ -281,7 +368,7 @@ export type AileeCommand =
 
 /**
  * A single titled section of a command result, suitable for compact display
- * in the Ailee status area.
+ * in the Mirror status area.
  */
 export interface CommandResultSection {
   label: string;
@@ -296,7 +383,7 @@ export interface CommandResultSection {
  */
 export interface CommandResult {
   ok: boolean;
-  command: AileeCommand;
+  command: MirrorCommand;
   /** Short headline summary suitable for a one-line status readout. */
   summary: string;
   /** Optional structured detail sections. */
@@ -310,3 +397,73 @@ export interface CommandResult {
   /** Safe, secret-free error description when the command failed. */
   error: string | null;
 }
+
+/**
+ * LLM provider choices supported by the v0.1+ backend. `none` means no
+ * provider is selected. The real providers are local Ollama, OpenAI-compatible
+ * endpoints, Anthropic, Gemini, and arbitrary custom base URLs. `demo` is a
+ * no-op placeholder that works without keys.
+ */
+export type LlmProvider =
+  | "ollama"
+  | "openai"
+  | "openai-compatible"
+  | "anthropic"
+  | "gemini"
+  | "custom";
+
+/**
+ * Read-only LLM status returned by `GET /llm/status`. Carries only non-secret
+ * descriptors — never the API key. `missingFields` names the config fields
+ * (not values) still required before the provider counts as configured.
+ */
+export interface LlmStatus {
+  enabled: boolean;
+  /** Selected provider id, or "none" when unset/disabled. */
+  provider: LlmProvider | "none";
+  /** Whether a non-empty base URL is configured (URL itself omitted). */
+  baseUrlConfigured: boolean;
+  model: string;
+  configured: boolean;
+  /** Names of missing config fields, e.g. "provider", "baseUrl", "model". */
+  missingFields: string[];
+  /** Where the config/secret resolved from; never a secret value. */
+  configSource: ConfigSource;
+}
+
+/**
+ * Request body for `POST /llm/chat`. A single user message plus an optional
+ * system prompt. No secrets are accepted here.
+ */
+export interface LlmChatRequest {
+  message: string;
+  systemPrompt?: string;
+}
+
+/**
+ * Successful response from `POST /llm/chat`. Never includes the API key or the
+ * raw provider request. `durationMs` is the round-trip time to the provider.
+ */
+export interface LlmChatResponse {
+  ok: true;
+  provider: LlmProvider;
+  model: string;
+  reply: string;
+  /** ISO timestamp of when the request was received. */
+  receivedAt: string;
+  durationMs: number;
+}
+
+/**
+ * Error response from `POST /llm/chat`. Safe, secret-free description only.
+ * `errorCode` is a stable machine code such as "not_configured",
+ * "invalid_request", "provider_error", or "timeout".
+ */
+export interface LlmChatError {
+  ok: false;
+  error: string;
+  errorCode: string;
+}
+
+/** Union of the two `POST /llm/chat` result shapes. */
+export type LlmChatResult = LlmChatResponse | LlmChatError;
